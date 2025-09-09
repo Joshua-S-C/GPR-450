@@ -57,6 +57,22 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 
 		// Test commit - Jupi
 
+		// algorithm
+		// 1. time step
+		// 2. resolve keyframe
+		//		a. paused: dt = 0
+		//		b. forward dt > 0
+		//			i. stop
+		//			ii. step(s) taken
+		//			iii. clip exited
+		//		c. reverse: dt < 0
+		//			i. stop
+		//			ii. step(s) taken
+		//			iii. clip exited
+		// 3. normalized keyframe / clip time: relative time / duration
+
+		clipCtrl->clipTime_sec += dt;
+		clipCtrl->keyframeTime_sec += dt;
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-1
