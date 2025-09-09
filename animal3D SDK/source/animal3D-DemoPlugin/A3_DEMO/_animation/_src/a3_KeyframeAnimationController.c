@@ -71,8 +71,29 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		//			iii. clip exited
 		// 3. normalized keyframe / clip time: relative time / duration
 
+		// time step
 		clipCtrl->clipTime_sec += dt;
 		clipCtrl->keyframeTime_sec += dt;
+
+		// resolve keyframe
+		if (clipCtrl->keyframeTime_sec > clipCtrl->keyframe->duration_sec) {
+			// Restart
+			if (clipCtrl->clipTime_sec > clipCtrl->clip->duration_sec) {
+
+				clipCtrl->clipTime_sec = 0;
+				clipCtrl->keyframeTime_sec = 0;
+
+				clipCtrl->keyframeIndex = 0;
+			} else {
+ 				clipCtrl->keyframeIndex++;
+				clipCtrl->keyframeTime_sec = 0;
+			}
+		}
+
+		// yupdate relative time
+		clipCtrl->keyframeParam = clipCtrl->keyframeTime_sec / clipCtrl->keyframe->duration_sec;
+		
+		
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-1

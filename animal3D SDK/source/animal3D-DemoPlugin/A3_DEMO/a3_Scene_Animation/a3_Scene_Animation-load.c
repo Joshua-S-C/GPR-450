@@ -206,6 +206,10 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 		a3ui32 const additionalSampleStart = hierarchySampleCount;
 		a3ui32 const additionalKeyframeStart = hierarchyKeyframeCount;
 		a3ui32 const additionalClipStart = hierarchyClipCount;
+
+		// TODO Team requirement. Change these
+		// TODO Later (bonus) Load from file. Check resource/animdata
+
 		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 0],   0, fps_additional);//0.0s
 		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 1],  15, fps_additional);//0.5s
 		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 2],  75, fps_additional);//2.5s
