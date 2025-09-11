@@ -78,23 +78,34 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 
 		// resolve keyframe
 		if (clipCtrl->keyframeTime_sec > clipCtrl->keyframe->duration_sec) {
-			// Restart
-			if (clipCtrl->clipTime_sec > clipCtrl->clip->duration_sec) {
+			//a3f64 keyframeTimeOvershoot = clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec;
 
+			
+			// Restart Clip
+			if (clipCtrl->clipTime_sec > clipCtrl->clip->duration_sec) {
+				//a3f64 clipTimeOvershoot = clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec;
+
+				// TODO Resolve overshoot
 				clipCtrl->clipTime_sec = 0;
 				clipCtrl->keyframeTime_sec = 0;
-
 				clipCtrl->keyframeIndex = 0;
+
+				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
 			} else {
  				clipCtrl->keyframeIndex++;
+
+				// TODO Resolve overshoot
 				clipCtrl->keyframeTime_sec = 0;
+
+				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
 			}
 		}
 
 		// yupdate relative time
 		clipCtrl->keyframeParam = clipCtrl->keyframeTime_sec / clipCtrl->keyframe->duration_sec;
+		clipCtrl->clipParam = clipCtrl->clipTime_sec / clipCtrl->clip->duration_sec;
 		
-		
+
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-1
