@@ -73,32 +73,82 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		// 3. normalized keyframe / clip time: relative time / duration
 
 		// time step
-		clipCtrl->clipTime_sec += dt;
-		clipCtrl->keyframeTime_sec += dt;
+		clipCtrl->clipTime_sec += dt * clipCtrl->clip->keyframeDirection;
+		clipCtrl->keyframeTime_sec += dt * clipCtrl->clip->keyframeDirection;
 
-		// resolve keyframe
-		if (clipCtrl->keyframeTime_sec > clipCtrl->keyframe->duration_sec) {
-			//a3f64 keyframeTimeOvershoot = clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec;
+		// Resolve Clip
+		// TODO Account for going backwards
+		a3f64 clipTimeOvershoot = clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec;
+		while (clipTimeOvershoot >= 0 || clipTimeOvershoot < -clipCtrl->clip->duration_sec)
+		{
+			// Determine transition action going backwards and forwards
+			a3_ClipTransitionFlag transitionFlag =
+				(clipCtrl->clip->keyframeDirection == 1 ?
+					clipCtrl->clip->transitionForward->flag :
+					clipCtrl->clip->transitionReverse->flag);
 
-			
-			// Restart Clip
-			if (clipCtrl->clipTime_sec > clipCtrl->clip->duration_sec) {
-				//a3f64 clipTimeOvershoot = clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec;
+			switch (transitionFlag)
+			{
+
+			// Stop
+			case a3clip_stopFlag:
+				clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
+				clipCtrl->keyframe = clipCtrl->clipPool->keyframe;
+				clipCtrl->keyframeTime_sec = clipCtrl->keyframe->duration_sec;
+				clipCtrl->clipTime_sec = clipCtrl->clip->duration_sec;
+
+				clipCtrl->keyframeParam = 1;
+				clipCtrl->clipParam = 1;
+
+				return -1;
+
+			// Loop
+			case a3clip_playFlag:
+				//clipCtrl->clipTime_sec = 0;
+				clipCtrl->clipTime_sec = clipTimeOvershoot;
 
 				// TODO Resolve overshoot
-				clipCtrl->clipTime_sec = 0;
-				clipCtrl->keyframeTime_sec = 0;
+
+				// Resetting
+				//clipCtrl->keyframeTime_sec = 0;
+				clipCtrl->keyframeTime_sec = clipCtrl->clipTime_sec;
 				clipCtrl->keyframeIndex = 0;
-
 				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
-			} else {
- 				clipCtrl->keyframeIndex++;
+				break;
 
-				// TODO Resolve overshoot
-				clipCtrl->keyframeTime_sec = 0;
+			// Ping Pong
+			case a3clip_reverseFlag:
+				return -1;
 
-				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
+			default:
+				// Achivement Unlocked: How did we get here?
+				break;
 			}
+
+			// Keep checking if past clip
+			clipTimeOvershoot = clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec;
+		}
+		
+		// Resolve Keyframes
+		a3f64 frameTimeOvershoot = clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec;
+		while (frameTimeOvershoot >= 0 || frameTimeOvershoot < -clipCtrl->keyframe->duration_sec)
+		{
+			// Go to next keyframe
+
+			if (clipCtrl->keyframeIndex < (a3ui32)clipCtrl->clip->keyframeIndex_final)
+				clipCtrl->keyframeIndex++;
+			else
+				//clipCtrl->keyframeIndex = 0;
+				break;
+
+			clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
+
+			// TODO Resolve overshoot
+			//clipCtrl->keyframeTime_sec = 0;
+			clipCtrl->keyframeTime_sec = frameTimeOvershoot;
+
+			// Keep checking if past next frame
+			frameTimeOvershoot = clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec;
 		}
 
 		// yupdate relative time
