@@ -249,7 +249,11 @@ a3i32 a3hierarchyStateUpdateObjectInverse(const a3_HierarchyState* state)
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 		
-
+		for (i = 0; i < state->hierarchy->numNodes; ++i)
+		{
+			a3real4x4TransformInverse(state->objectSpaceInv->hpose_base[i].transformMat.m,
+				state->objectSpace->hpose_base[i].transformMat.m);
+		}
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2

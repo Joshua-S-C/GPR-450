@@ -34,7 +34,9 @@ static inline void a3kinematicsSolveForwardSingle(const a3_HierarchyState* hiera
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	a3real4x4Product(hierarchyState->objectSpace->hpose_base[index].transformMat.m,
+		hierarchyState->objectSpace->hpose_base[parentIndex].transformMat.m,
+		hierarchyState->localSpace->hpose_base[index].transformMat.m);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
@@ -46,7 +48,7 @@ static inline void a3kinematicsSolveForwardRoot(const a3_HierarchyState* hierarc
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	hierarchyState->objectSpace->hpose_base[index].transformMat = hierarchyState->localSpace->hpose_base[index].transformMat;
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
@@ -68,8 +70,16 @@ a3i32 a3kinematicsSolveForwardPartial(const a3_HierarchyState* hierarchyState, c
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
-
-
+		a3ui32 i;
+		for (i = firstIndex; i < nodeCount; ++i)
+		{
+			// Check if there is no parent, therefore we're root
+			if (hierarchyState->hierarchy->nodes[i].parentIndex < 0) {
+				a3kinematicsSolveForwardRoot(hierarchyState, hierarchyState->hierarchy->nodes[i].index);
+			} else {
+				a3kinematicsSolveForwardSingle(hierarchyState, hierarchyState->hierarchy->nodes[i].index, hierarchyState->hierarchy->nodes[i].parentIndex);
+			}
+		}
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
