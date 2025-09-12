@@ -81,19 +81,22 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 	//			iii. clip exited
 	// 3. normalized keyframe / clip time: relative time / duration
 
+	// This is the new forward backwards
 	clipCtrl->playback_step = (clipCtrl->playback_step > 0) - (clipCtrl->playback_step < 0);
 
 	// Time Step
-	clipCtrl->clipTime_sec += dt * clipCtrl->clip->keyframeDirection;
-	clipCtrl->keyframeTime_sec += dt * clipCtrl->clip->keyframeDirection;
+	clipCtrl->clipTime_sec += dt * clipCtrl->clip->keyframeDirection * clipCtrl->playback_step;
+	clipCtrl->keyframeTime_sec += dt * clipCtrl->clip->keyframeDirection * clipCtrl->playback_step;
 
 	// Resolve Clip
 	a3f64 clipTimeOvershoot = clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec;
 	
-	while (clipTimeOvershoot >= 0 || clipTimeOvershoot < -clipCtrl->clip->duration_sec)
+	while (clipCtrl->playback_step == 1 
+		? clipTimeOvershoot >= 0 
+		: clipTimeOvershoot < -clipCtrl->clip->duration_sec)
 	{
 		// Determine transition action going backwards and forwards
-		a3_ClipTransitionFlag transitionFlag = (clipCtrl->clip->keyframeDirection == 1 
+		a3_ClipTransitionFlag transitionFlag = (clipCtrl->playback_step == 1
 											   ? clipCtrl->clip->transitionForward->flag 
 				                               : clipCtrl->clip->transitionReverse->flag);
 
@@ -118,9 +121,10 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 			// Loop
 			case a3clip_playFlag:
 				// Set time
-				clipCtrl->clipTime_sec = clipCtrl->clip->keyframeDirection == -1
-					? clipCtrl->clip->duration_sec + (clipTimeOvershoot + clipCtrl->clip->duration_sec)
-					: clipTimeOvershoot;
+				clipCtrl->clipTime_sec =
+					clipCtrl->playback_step == 1
+					? clipTimeOvershoot
+					: clipCtrl->clip->duration_sec + (clipTimeOvershoot + clipCtrl->clip->duration_sec);
 				clipCtrl->keyframeTime_sec = clipCtrl->clipTime_sec;
 
 				// Set keyframe
@@ -135,10 +139,16 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 				// reverse the direction
 				// TODO please help my god
 
-				// set the time
-				clipCtrl->clipTime_sec = clipTimeOvershoot;
+				clipTimeOvershoot *= clipCtrl->playback_step;
 
-				return -1;
+				clipCtrl->playback_step = -clipCtrl->playback_step;
+
+				// set the time
+				clipCtrl->clipTime_sec = clipCtrl->clip->duration_sec - clipTimeOvershoot;
+
+				clipTimeOvershoot = clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec;
+
+				break;
 
 			default:
 				// Achivement Unlocked: How did we get here?
@@ -151,18 +161,36 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		
 	// Resolve Keyframes
 	a3f64 frameTimeOvershoot = clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec;
-	while (frameTimeOvershoot >= 0 || frameTimeOvershoot < -clipCtrl->keyframe->duration_sec)
+	
+	// Going forward
+	while (clipCtrl->playback_step == 1 
+		? frameTimeOvershoot >= 0 
+		: frameTimeOvershoot < -clipCtrl->keyframe->duration_sec)
 	{
-		// Go to next keyframe. 
-		// If it's the last keyframe, then the clip was already looped anyway
-		if (clipCtrl->keyframeIndex < (a3ui32)clipCtrl->clip->keyframeIndex_final)
-			clipCtrl->keyframeIndex++;
+		if (clipCtrl->playback_step == 1) 
+		{
+			// Go to next keyframe. 
+			// If it's the last keyframe, then the clip was already looped anyway
+			if (clipCtrl->keyframeIndex < (a3ui32)clipCtrl->clip->keyframeIndex_final)
+				clipCtrl->keyframeIndex++;
 
-		clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
-		clipCtrl->keyframeTime_sec = frameTimeOvershoot;
+			clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
+			clipCtrl->keyframeTime_sec = frameTimeOvershoot;
 
-		// Keep checking if past next frame
-		frameTimeOvershoot = clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec;
+			// Keep checking if past next frame
+			frameTimeOvershoot = clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec;
+		} else if (clipCtrl->playback_step == -1) {
+			// Go to next keyframe. 
+			// If it's the last keyframe, then the clip was already looped anyway
+			if (clipCtrl->keyframeIndex > 0)
+				clipCtrl->keyframeIndex--;
+
+			clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
+			clipCtrl->keyframeTime_sec = frameTimeOvershoot;
+
+			// Keep checking if past next frame
+			frameTimeOvershoot = (clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec) * -1;
+		}
 	}
 
 	// Yupdate relative time
