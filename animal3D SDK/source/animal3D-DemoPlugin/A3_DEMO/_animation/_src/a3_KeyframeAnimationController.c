@@ -25,9 +25,9 @@
 /*
 	Modifications organized by Author
 	Team:		Initial clip controller update functionality. Updating clip and keyframe time, keyframe index, keyframe param, and resetting at end of clip
-	Jupi:		Finishing update base functionality. Resolving keyframe and clip times with while loops, accounting for overshoot and direction, clip param, transition action setup and finished loop and stop
-	Brandon:	
-	Ben:		
+	Jupi:		Finishing update base functionality. Resolving keyframe and clip times with while loops, accounting for overshoot and direction, clip param, transition action setup and finished loop, stop, and ping pong
+	Brandon:	Helped with ping pong
+	Ben:		Helped a lot with ping pong. Emotional support!!!
 */
 
 #include "../a3_KeyframeAnimationController.h"

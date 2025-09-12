@@ -26,6 +26,11 @@
 	********************************************
 */
 
+/*
+	Modifications organized by Author
+	Ben:		Added another scene object (teapot num 2)
+*/
+
 #ifndef __ANIMAL3D_SCENE_ANIMATION_H
 #define __ANIMAL3D_SCENE_ANIMATION_H
 

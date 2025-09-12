@@ -26,6 +26,11 @@
 	********************************************
 */
 
+/*
+	Modifications organized by Author
+	Ben:		Creating new animation for teapot
+*/
+
 //-----------------------------------------------------------------------------
 
 #include "../a3_Scene_Animation.h"

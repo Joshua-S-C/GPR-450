@@ -26,6 +26,11 @@
 	********************************************
 */
 
+/*
+	Modifications organized by Author
+	Ben:		Adding second teapot to drawables
+*/
+
 #ifndef __ANIMAL3D_DEMOSTATE_H
 #define __ANIMAL3D_DEMOSTATE_H
 

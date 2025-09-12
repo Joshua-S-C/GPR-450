@@ -26,6 +26,12 @@
 	********************************************
 */
 
+/*
+	Modifications organized by Author
+	Ben:		Added another controller and changed animation timings
+*/
+
+
 //-----------------------------------------------------------------------------
 
 #include "../a3_Scene_Animation.h"

@@ -26,6 +26,11 @@
 	********************************************
 */
 
+/*
+	Modifications organized by Author
+	Ben:		Rendering the second teapot
+*/
+
 //-----------------------------------------------------------------------------
 
 #include "../a3_Scene_Animation.h"
