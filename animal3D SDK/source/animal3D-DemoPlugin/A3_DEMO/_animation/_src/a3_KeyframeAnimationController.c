@@ -60,6 +60,9 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 	if (!clipCtrl || !clipCtrl->clipPool)
 		return -1;
 
+	if (dt == 0)
+		return -1;
+
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-1: IMPLEMENT ME
 //-----------------------------------------------------------------------------
@@ -89,8 +92,10 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 	clipCtrl->keyframeTime_sec += dt * clipCtrl->clip->keyframeDirection * clipCtrl->playback_step;
 
 	// Resolve Clip
-	a3f64 clipTimeOvershoot = clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec;
-	
+	a3f64 clipTimeOvershoot = clipCtrl->playback_step == 1
+		? clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec
+		: -clipCtrl->clipTime_sec;
+
 	while (clipCtrl->playback_step == 1 
 		? clipTimeOvershoot >= 0 
 		: clipTimeOvershoot < -clipCtrl->clip->duration_sec)
@@ -121,32 +126,40 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 			// Loop
 			case a3clip_playFlag:
 				// Set time
-				clipCtrl->clipTime_sec =
-					clipCtrl->playback_step == 1
+				clipCtrl->clipTime_sec = clipCtrl->playback_step == 1
 					? clipTimeOvershoot
 					: clipCtrl->clip->duration_sec + (clipTimeOvershoot + clipCtrl->clip->duration_sec);
-				clipCtrl->keyframeTime_sec = clipCtrl->clipTime_sec;
-
+				
 				// Set keyframe
-				clipCtrl->keyframeIndex = clipCtrl->clip->keyframeDirection > 0 ? 
-					0 : 
-					clipCtrl->clip->keyframeIndex_final;
+				clipCtrl->keyframeTime_sec = clipCtrl->clipTime_sec;
+				clipCtrl->keyframeIndex = clipCtrl->playback_step == 1 
+					? 0
+					: clipCtrl->clip->keyframeIndex_final;
 				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
+
 				break;
 
 			// Ping Pong
 			case a3clip_reverseFlag:
-				// reverse the direction
-				// TODO please help my god
+				if (clipCtrl->playback_step == 1) {
+					clipCtrl->playback_step = -30; // Temp
 
-				clipTimeOvershoot *= clipCtrl->playback_step;
+					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_final;
 
-				clipCtrl->playback_step = -clipCtrl->playback_step;
+					clipCtrl->clipTime_sec = clipCtrl->clip->duration_sec - clipTimeOvershoot;
+					clipCtrl->keyframeTime_sec = clipCtrl->keyframe->duration_sec - clipTimeOvershoot;
 
-				// set the time
-				clipCtrl->clipTime_sec = clipCtrl->clip->duration_sec - clipTimeOvershoot;
 
-				clipTimeOvershoot = clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec;
+				} else {
+					clipCtrl->playback_step = 30; // Temp
+
+					clipCtrl->keyframeIndex = clipCtrl->clip->keyframeIndex_first;
+
+					clipCtrl->clipTime_sec = clipTimeOvershoot;
+					clipCtrl->keyframeTime_sec = clipTimeOvershoot;
+				}
+
+				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
 
 				break;
 
@@ -156,7 +169,9 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 		}
 
 		// Keep checking if past clip
-		clipTimeOvershoot = clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec;
+		clipTimeOvershoot = clipCtrl->playback_step == 1
+			? clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec
+			: -clipCtrl->clipTime_sec;
 	}
 		
 	// Resolve Keyframes
@@ -180,16 +195,16 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 			// Keep checking if past next frame
 			frameTimeOvershoot = clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec;
 		} else if (clipCtrl->playback_step == -1) {
-			// Go to next keyframe. 
-			// If it's the last keyframe, then the clip was already looped anyway
+			// Go to prev keyframe
 			if (clipCtrl->keyframeIndex > 0)
 				clipCtrl->keyframeIndex--;
 
 			clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
-			clipCtrl->keyframeTime_sec = frameTimeOvershoot;
 
 			// Keep checking if past next frame
-			frameTimeOvershoot = (clipCtrl->keyframeTime_sec - clipCtrl->keyframe->duration_sec) * -1;
+			frameTimeOvershoot = clipCtrl->keyframe->duration_sec + clipCtrl->keyframeTime_sec;
+
+			clipCtrl->keyframeTime_sec = frameTimeOvershoot;
 		}
 	}
 
