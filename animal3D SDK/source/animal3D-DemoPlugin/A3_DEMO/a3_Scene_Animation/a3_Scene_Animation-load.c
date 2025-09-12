@@ -26,6 +26,12 @@
 	********************************************
 */
 
+/*
+	Modifications organized by Author
+	Ben:		Added another controller and changed animation timings
+*/
+
+
 //-----------------------------------------------------------------------------
 
 #include "../a3_Scene_Animation.h"
@@ -79,6 +85,8 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 	a3ui32 const hierarchyClipCount = 0;
 	a3ui32 const hierarchySampleCount = 1;
 
+	a3ui32 const hierarchyClipCount2 = 0;
+	a3ui32 const hierarchySampleCount2 = 1;
 
 	// stream animation assets
 	const a3boolean streaming = demoState->streaming & !force_disable_streaming;
@@ -110,6 +118,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 		a3hierarchySetNode(scene->sceneGraph,  2, 0, "scene_light_main");
 		a3hierarchySetNode(scene->sceneGraph,  3, 0, "scene_skybox");
 		a3hierarchySetNode(scene->sceneGraph,  4, 0, "scene_teapot");
+		a3hierarchySetNode(scene->sceneGraph,  5, 0, "scene_teapot2");
 
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-2: ADD SCENE GRAPH NODES
@@ -155,6 +164,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 	scene->obj_light_main->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_light_main");
 	scene->obj_skybox->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skybox");
 	scene->obj_teapot->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_teapot");
+	scene->obj_teapot2->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_teapot2");
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-2: ADD NODES
 //-----------------------------------------------------------------------------
@@ -188,6 +198,17 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 		hierarchyClipCount + additionalClipCount,
 		hierarchyKeyframeCount + additionalKeyframeCount,
 		hierarchySampleCount + additionalSampleCount);
+
+	// initialize clip pool 2
+	a3ui32 const hierarchyKeyframeCount2 = hierarchySampleCount - 1;
+	a3ui32 const additionalSampleCount2 = 6;
+	a3ui32 const additionalKeyframeCount2 = additionalSampleCount - 1;
+	a3ui32 const additionalClipCount2 = 1;
+	a3clipPoolCreate(scene->clipPool2,
+		hierarchyClipCount2 + additionalClipCount2,
+		hierarchyKeyframeCount2 + additionalKeyframeCount2,
+		hierarchySampleCount2 + additionalSampleCount2);
+
 	
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-2: ADD CONTROLLERS
@@ -206,6 +227,10 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 		a3ui32 const additionalSampleStart = hierarchySampleCount;
 		a3ui32 const additionalKeyframeStart = hierarchyKeyframeCount;
 		a3ui32 const additionalClipStart = hierarchyClipCount;
+
+		// TODO Team requirement. Change these
+		// TODO Later (bonus) Load from file. Check resource/animdata
+
 		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 0],   0, fps_additional);//0.0s
 		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 1],  15, fps_additional);//0.5s
 		a3sampleInit(&scene->clipPool->sample[additionalSampleStart + 2],  75, fps_additional);//2.5s
@@ -224,6 +249,36 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 
 		j = a3clipGetIndexInPool(scene->clipPool, "teapot_morph");
 		a3clipControllerInit(scene->clipCtrl_morph, "teapot_ctrl_morph", scene->clipPool, j, rate_additional, fps_additional);
+		scene->morph_time = 0.0;
+	}
+	{
+		a3ui32 const rate_additional = 30;
+		a3f64 const fps_additional = (a3f64)rate_additional;
+		a3ui32 const additionalSampleStart = hierarchySampleCount;
+		a3ui32 const additionalKeyframeStart = hierarchyKeyframeCount;
+		a3ui32 const additionalClipStart = hierarchyClipCount;
+
+		// TODO Team requirement. Change these
+		// TODO Later (bonus) Load from file. Check resource/animdata
+
+		a3sampleInit(&scene->clipPool2->sample[additionalSampleStart + 0], 0, fps_additional);//0.0s
+		a3sampleInit(&scene->clipPool2->sample[additionalSampleStart + 1], 30, fps_additional);//1.0s
+		a3sampleInit(&scene->clipPool2->sample[additionalSampleStart + 2], 60, fps_additional);//2.0s
+		a3sampleInit(&scene->clipPool2->sample[additionalSampleStart + 3], 90, fps_additional);//3.0s
+		a3sampleInit(&scene->clipPool2->sample[additionalSampleStart + 4], 120, fps_additional);//4.0s
+		a3sampleInit(&scene->clipPool2->sample[additionalSampleStart + 5], 150, fps_additional);//5.0s
+		for (j = 0; j < additionalKeyframeCount; ++j)
+			a3keyframeInit(&scene->clipPool2->keyframe[additionalKeyframeStart + j],
+				&scene->clipPool2->sample[additionalSampleStart + j], &scene->clipPool2->sample[additionalSampleStart + j + 1], fps_additional);
+
+		j = additionalClipStart;
+		a3clipInit(&scene->clipPool2->clip[j], "teapot_morph2",
+			&scene->clipPool2->keyframe[additionalKeyframeStart + 0],
+			&scene->clipPool2->keyframe[additionalKeyframeStart + 4]);
+		a3clipCalculateDuration(scene->clipPool2, j, fps_additional);
+
+		j = a3clipGetIndexInPool(scene->clipPool2, "teapot_morph2");
+		a3clipControllerInit(scene->clipCtrl_morph2, "teapot_ctrl_morph2", scene->clipPool2, j, rate_additional, fps_additional);
 		scene->morph_time = 0.0;
 	}
 	
@@ -261,6 +316,13 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 	scene->obj_teapot->position.y = -a3real_six;
 	scene->obj_teapot->scale.x = a3real_half;
 	scene->obj_teapot->scaleMode = 1;
+
+	// teapot 2
+	scene->obj_teapot2->position.y = a3real_six;
+	scene->obj_teapot2->scale.x = 1;
+	scene->obj_teapot2->scale.y = 1;
+	scene->obj_teapot2->scale.z = 1;
+	scene->obj_teapot2->scaleMode = 1;
 
 
 	// effectors

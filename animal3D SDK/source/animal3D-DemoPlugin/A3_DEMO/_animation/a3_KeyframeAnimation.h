@@ -91,9 +91,9 @@ a3i32 a3keyframeInit(a3_Keyframe* keyframe_out, a3_Sample const* sample0, a3_Sam
 // clip transition flags
 typedef enum a3_ClipTransitionFlag
 {
-	a3clip_stopFlag = 0x00,		// stop flag (no change)
-	a3clip_playFlag = 0x01,		// play after transition
-	a3clip_reverseFlag = 0x02,	// direction is reverse after transition
+	a3clip_stopFlag = 0x00,		// stop flag (no change)					// Stop
+	a3clip_playFlag = 0x01,		// play after transition					// Loop
+	a3clip_reverseFlag = 0x02,	// direction is reverse after transition	// Ping Pong
 	a3clip_skipFlag = 0x04,		// skip terminus frame after transition
 	a3clip_overstepFlag = 0x08,	// keep overstep time after transition
 	a3clip_terminusFlag = 0x10,	// target terminus is end of clip
