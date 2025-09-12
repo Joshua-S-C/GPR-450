@@ -84,13 +84,32 @@ void a3animation_update_animation_other(
 	a3f64 keyframeParam;
 	a3f64 clipParam;
 
+	a3ui32 sampleIndex1;
+	a3f64 keyframeParam2;
+	a3f64 clipParam2;
+
 	a3clipControllerUpdate(scene->clipCtrl_morph, dt);
+	a3clipControllerUpdate(scene->clipCtrl_morph2, dt);
 	sampleIndex0 = scene->clipPool->keyframe[scene->clipCtrl_morph->keyframeIndex].sampleIndex0;
+	sampleIndex1 = scene->clipPool2->keyframe[scene->clipCtrl_morph2->keyframeIndex].sampleIndex0;
 	keyframeParam = scene->clipCtrl_morph->keyframeParam;
+	keyframeParam2 = scene->clipCtrl_morph2->keyframeParam;
 	clipParam = scene->clipCtrl_morph->clipParam;
+	clipParam2 = scene->clipCtrl_morph->clipParam;
 
 	scene->morph_time = (a3f64)sampleIndex0 + keyframeParam;
 	scene->obj_teapot->euler.z = a3trigValid_sind((a3real)keyframeParam * a3real_threesixty);
+
+	//Animation for the 2nd teapot
+	scene->obj_teapot2->euler.x = a3trigValid_sind((a3real)keyframeParam2 * 360);
+	scene->obj_teapot2->euler.y = a3trigValid_sind((a3real)keyframeParam2 * 360);
+	scene->obj_teapot2->euler.z = a3trigValid_sind((a3real)keyframeParam2 * 180);
+	scene->obj_teapot2->scale.x = a3trigValid_sind((a3real)keyframeParam2 * 2.5);
+	scene->obj_teapot2->scale.y = a3trigValid_sind((a3real)keyframeParam2 * 0.5);
+	scene->obj_teapot2->scale.z = a3trigValid_sind((a3real)keyframeParam2 * 1.5);
+
+	scene->obj_teapot2->position.y = a3trigValid_sind((a3real)keyframeParam2 * 5);
+	scene->obj_teapot2->position.x = -a3trigValid_sind((a3real)keyframeParam2 * 10);
 }
 
 void a3animation_update_animation(

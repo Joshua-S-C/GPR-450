@@ -249,7 +249,8 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 				{ A3_DEMO_OBJ"teapot/morph/teapot_scale_x.obj", 0, downscale20x_y2z_x2y.mm, a3model_calculateVertexTangents },
 				{ A3_DEMO_OBJ"teapot/morph/teapot_scale_y.obj", 0, downscale20x_y2z_x2y.mm, a3model_calculateVertexTangents },
 				{ A3_DEMO_OBJ"teapot/morph/teapot_scale_z.obj", 0, downscale20x_y2z_x2y.mm, a3model_calculateVertexTangents },
-			},
+				
+			}
 		};
 
 		// static scene procedural objects
