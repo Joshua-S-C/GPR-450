@@ -104,9 +104,9 @@ void a3animation_update_animation_other(
 	scene->obj_teapot2->euler.x = a3trigValid_sind((a3real)keyframeParam2 * 360);
 	scene->obj_teapot2->euler.y = a3trigValid_sind((a3real)keyframeParam2 * 360);
 	scene->obj_teapot2->euler.z = a3trigValid_sind((a3real)keyframeParam2 * 180);
-	scene->obj_teapot2->scale.x = a3trigValid_sind((a3real)keyframeParam2 * 2.5);
-	scene->obj_teapot2->scale.y = a3trigValid_sind((a3real)keyframeParam2 * 0.5);
-	scene->obj_teapot2->scale.z = a3trigValid_sind((a3real)keyframeParam2 * 1.5);
+	scene->obj_teapot2->scale.x = a3trigValid_sind((a3real)keyframeParam2 * (a3real)2.5);
+	scene->obj_teapot2->scale.y = a3trigValid_sind((a3real)keyframeParam2 * (a3real)0.5);
+	scene->obj_teapot2->scale.z = a3trigValid_sind((a3real)keyframeParam2 * (a3real)1.5);
 
 	scene->obj_teapot2->position.y = a3trigValid_sind((a3real)keyframeParam2 * 5);
 	scene->obj_teapot2->position.x = -a3trigValid_sind((a3real)keyframeParam2 * 10);
