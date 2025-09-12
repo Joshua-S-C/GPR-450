@@ -81,6 +81,8 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 	//			iii. clip exited
 	// 3. normalized keyframe / clip time: relative time / duration
 
+	clipCtrl->playback_step = (clipCtrl->playback_step > 0) - (clipCtrl->playback_step < 0);
+
 	// Time Step
 	clipCtrl->clipTime_sec += dt * clipCtrl->clip->keyframeDirection;
 	clipCtrl->keyframeTime_sec += dt * clipCtrl->clip->keyframeDirection;
@@ -116,16 +118,23 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 			// Loop
 			case a3clip_playFlag:
 				// Set time
-				clipCtrl->clipTime_sec = clipTimeOvershoot;
+				clipCtrl->clipTime_sec = (clipCtrl->clip->keyframeDirection > 0) ? 
+					clipTimeOvershoot :
+					clipCtrl->clip->duration_sec - clipTimeOvershoot;
 				clipCtrl->keyframeTime_sec = clipCtrl->clipTime_sec;
 
 				// Set keyframe
-				clipCtrl->keyframeIndex = 0;
+				clipCtrl->keyframeIndex = clipCtrl->clip->keyframeDirection > 0 ? 
+					0 : 
+					clipCtrl->clip->keyframeIndex_final;
 				clipCtrl->keyframe = clipCtrl->clipPool->keyframe + clipCtrl->keyframeIndex;
 				break;
 
 			// Ping Pong
 			case a3clip_reverseFlag:
+
+
+
 				return -1;
 
 			default:
