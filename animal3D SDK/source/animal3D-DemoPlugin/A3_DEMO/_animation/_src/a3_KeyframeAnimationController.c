@@ -89,13 +89,13 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 
 	// Resolve Clip
 	a3f64 clipTimeOvershoot = clipCtrl->clipTime_sec - clipCtrl->clip->duration_sec;
+	
 	while (clipTimeOvershoot >= 0 || clipTimeOvershoot < -clipCtrl->clip->duration_sec)
 	{
 		// Determine transition action going backwards and forwards
-		a3_ClipTransitionFlag transitionFlag =
-			(clipCtrl->clip->keyframeDirection == 1 ?
-				clipCtrl->clip->transitionForward->flag :
-				clipCtrl->clip->transitionReverse->flag);
+		a3_ClipTransitionFlag transitionFlag = (clipCtrl->clip->keyframeDirection == 1 
+											   ? clipCtrl->clip->transitionForward->flag 
+				                               : clipCtrl->clip->transitionReverse->flag);
 
 		switch (transitionFlag)
 		{
@@ -118,9 +118,9 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 			// Loop
 			case a3clip_playFlag:
 				// Set time
-				clipCtrl->clipTime_sec = (clipCtrl->clip->keyframeDirection > 0) ? 
-					clipTimeOvershoot :
-					clipCtrl->clip->duration_sec - clipTimeOvershoot;
+				clipCtrl->clipTime_sec = clipCtrl->clip->keyframeDirection == -1
+					? clipCtrl->clip->duration_sec + (clipTimeOvershoot + clipCtrl->clip->duration_sec)
+					: clipTimeOvershoot;
 				clipCtrl->keyframeTime_sec = clipCtrl->clipTime_sec;
 
 				// Set keyframe
@@ -132,8 +132,11 @@ a3i32 a3clipControllerUpdate(a3_ClipController* clipCtrl, a3f64 dt)
 
 			// Ping Pong
 			case a3clip_reverseFlag:
+				// reverse the direction
+				// TODO please help my god
 
-
+				// set the time
+				clipCtrl->clipTime_sec = clipTimeOvershoot;
 
 				return -1;
 
