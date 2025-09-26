@@ -113,7 +113,8 @@ a3i32 a3hierarchyPoseGroupLoadBinary(a3_HierarchyPoseGroup* poseGroup, a3_FileSt
 //****TO-DO-ANIM-OPTIONAL: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 				
-
+				// fread
+				// -> create
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-OPTIONAL
@@ -141,7 +142,8 @@ a3i32 a3hierarchyPoseGroupSaveBinary(a3_HierarchyPoseGroup const* poseGroup, a3_
 //****TO-DO-ANIM-OPTIONAL: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 				
-
+				// fwrite
+				// -> 
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-OPTIONAL
