@@ -159,7 +159,27 @@ void a3kinematicsUpdateHierarchyStateFK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
+		// From Buckstein
 
+		// Goal: local pose = total of base and delta
+
+		a3hierarchyPoseConcat(
+			activeHS->localSpace,
+			activeHS->animPose,		// Delta pose (from clip controller interpolation)
+			baseHS->localSpace,		// Precomputer base pose
+			activeHS->hierarchy->numNodes
+		);
+
+		// Convert description of transformation in local space -> matrices
+		a3hierarchyPoseConvert(
+			activeHS->localSpace,
+			activeHS->hierarchy->numNodes,
+			poseGroup->channel,
+			poseGroup->order
+		);
+
+		// Solving time! (Do FK algorithm
+		a3kinematicsSolveForward(activeHS);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
