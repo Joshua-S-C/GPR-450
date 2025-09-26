@@ -222,7 +222,9 @@ void a3kinematicsUpdateHierarchyStateSkin(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+		a3hierarchyStateUpdateLocalInverse(activeHS);
+		a3hierarchyStateUpdateObjectInverse(activeHS);
+		a3hierarchyStateUpdateObjectBindToCurrent(activeHS, baseHS);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
