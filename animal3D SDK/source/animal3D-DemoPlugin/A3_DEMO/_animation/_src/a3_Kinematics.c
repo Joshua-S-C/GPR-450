@@ -34,7 +34,12 @@ static inline void a3kinematicsSolveForwardSingle(const a3_HierarchyState* hiera
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	// T[this_object] = T[parent_object] * T[this_local]
+	a3real4x4Product(
+		hierarchyState->objectSpace->hpose_base[index].transformMat.m,		// Result: this node object-space.
+		hierarchyState->objectSpace->hpose_base[parentIndex].transformMat.m,// Left-hand: parent node object-space.
+		hierarchyState->localSpace->hpose_base[index].transformMat.m		// Right-hand: this node local space.
+	);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
@@ -46,7 +51,8 @@ static inline void a3kinematicsSolveForwardRoot(const a3_HierarchyState* hierarc
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	// T[root_object] = T[root_local]
+	hierarchyState->objectSpace->hpose_base[index] = hierarchyState->localSpace->hpose_base[index];
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
@@ -69,7 +75,16 @@ a3i32 a3kinematicsSolveForwardPartial(const a3_HierarchyState* hierarchyState, c
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+		const a3_HierarchyNode* itr = hierarchyState->hierarchy->nodes + firstIndex;
+		const a3_HierarchyNode* const end = itr + nodeCount;
+		for (; itr < end; ++itr)
+		{
+			if (itr->parentIndex >= 0)
+				a3kinematicsSolveForwardSingle(hierarchyState, itr->index, itr->parentIndex);
+			else
+				a3kinematicsSolveForwardRoot(hierarchyState, itr->index);
+		}
+		return (a3i32)(end - itr);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
@@ -149,7 +164,15 @@ void a3kinematicsUpdateHierarchyStateFK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+		a3hierarchyPoseConcat(activeHS->localSpace,	// local: goal to calculate
+			activeHS->animPose,						// holds current sample pose
+			baseHS->localSpace,						// holds base pose (animPose is all identity poses)
+			activeHS->hierarchy->numNodes);
+		a3hierarchyPoseConvert(activeHS->localSpace,
+			activeHS->hierarchy->numNodes,
+			poseGroup->channel,
+			poseGroup->order);
+		a3kinematicsSolveForward(activeHS);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
@@ -192,7 +215,9 @@ void a3kinematicsUpdateHierarchyStateSkin(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+		a3hierarchyStateUpdateLocalInverse(activeHS);
+		a3hierarchyStateUpdateObjectInverse(activeHS);
+		a3hierarchyStateUpdateObjectBindToCurrent(activeHS, baseHS);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2

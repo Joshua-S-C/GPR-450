@@ -35,8 +35,64 @@ a3i32 a3spatialPoseConvert(a3_SpatialPose* spatialPose, const a3_SpatialPoseChan
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
-		
 
+		// Build transformation by channel (to-do: check channels): 
+		//	-> final result: 
+		//		v' = t + R * S * v
+		//		T = { R * S (upper-left 3x3); t (upper-right 1x3) }
+		//	-> build and concatenate rotations
+		//		-> e.g. R(z,y,x) = R(z) * R(y) * R(z))
+		//			(or use existing function if all rotation channels enabled)
+		//	-> apply scale by multiplying rotation columns by respective scale component
+		//		-> e.g. R * S = { R[0] * S[0,0]; R[1] * S[1,1]; R[2] * S[2,2] }
+		//			(more efficient than full matrix multiplication)
+		//	-> add translation in fourth column
+		//test:
+		//a3real4x4SetRotateZYX(spatialPose->transformMat.m, spatialPose->rotate.x, spatialPose->rotate.y, spatialPose->rotate.z);
+
+		// compute rotation
+		a3mat4 Rx, Ry, Rz, R;
+		a3real4x4SetRotateX(Rx.m, a3trigValid_sind(spatialPose->rotate.x));
+		a3real4x4SetRotateY(Ry.m, a3trigValid_sind(spatialPose->rotate.y));
+		a3real4x4SetRotateZ(Rz.m, a3trigValid_sind(spatialPose->rotate.z));
+		switch (order)
+		{
+		case a3poseEulerOrder_xyz:
+			a3real4x4Product(R.m, Rx.m, Ry.m);
+			a3real4x4Product(spatialPose->transformMat.m, R.m, Rz.m);
+			break;
+		case a3poseEulerOrder_yzx:
+			a3real4x4Product(R.m, Ry.m, Rz.m);
+			a3real4x4Product(spatialPose->transformMat.m, R.m, Rx.m);
+			break;
+		case a3poseEulerOrder_zxy:
+			a3real4x4Product(R.m, Rz.m, Rx.m);
+			a3real4x4Product(spatialPose->transformMat.m, R.m, Ry.m);
+			break;
+		case a3poseEulerOrder_yxz:
+			a3real4x4Product(R.m, Ry.m, Rx.m);
+			a3real4x4Product(spatialPose->transformMat.m, R.m, Rz.m);
+			break;
+		case a3poseEulerOrder_xzy:
+			a3real4x4Product(R.m, Rx.m, Rz.m);
+			a3real4x4Product(spatialPose->transformMat.m, R.m, Ry.m);
+			break;
+		case a3poseEulerOrder_zyx:
+			a3real4x4Product(R.m, Rz.m, Ry.m);
+			a3real4x4Product(spatialPose->transformMat.m, R.m, Rx.m);
+			break;
+		}
+
+		// multiply columns by respective scale
+		a3real3MulS(spatialPose->transformMat.v0.v, spatialPose->scale.x);
+		a3real3MulS(spatialPose->transformMat.v1.v, spatialPose->scale.y);
+		a3real3MulS(spatialPose->transformMat.v2.v, spatialPose->scale.z);
+
+		// add translation in fourth column
+		spatialPose->transformMat.v3 = spatialPose->translate;
+		
+		// Done
+		return 1;
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
@@ -82,8 +138,26 @@ a3i32 a3spatialPoseConcat(a3_SpatialPose* spatialPose_out, const a3_SpatialPose*
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
-		
+ 
+		// angles: addition is ok for the purposes of what we're doing
+		// to-do: check channels
+		spatialPose_out->rotate.x = spatialPose_lhs->rotate.x + spatialPose_rhs->rotate.x;
+		spatialPose_out->rotate.y = spatialPose_lhs->rotate.y + spatialPose_rhs->rotate.y;
+		spatialPose_out->rotate.z = spatialPose_lhs->rotate.z + spatialPose_rhs->rotate.z;
 
+		// scale: multiplication
+		// to-do: check channels
+		spatialPose_out->scale.x = spatialPose_lhs->scale.x * spatialPose_rhs->scale.x;
+		spatialPose_out->scale.y = spatialPose_lhs->scale.y * spatialPose_rhs->scale.y;
+		spatialPose_out->scale.z = spatialPose_lhs->scale.z * spatialPose_rhs->scale.z;
+
+		// translation: addition
+		// to-so: check channels
+		spatialPose_out->translate.x = spatialPose_lhs->translate.x + spatialPose_rhs->translate.x;
+		spatialPose_out->translate.y = spatialPose_lhs->translate.y + spatialPose_rhs->translate.y;
+		spatialPose_out->translate.z = spatialPose_lhs->translate.z + spatialPose_rhs->translate.z;
+
+		return 1;
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
@@ -101,7 +175,25 @@ a3i32 a3spatialPoseDeconcat(a3_SpatialPose* spatialPose_out, const a3_SpatialPos
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 		
+		// angles: subtraction is ok for the purposes of what we're doing
+		// to-do: check channels
+		spatialPose_out->rotate.x = spatialPose_lhs->rotate.x - spatialPose_rhs->rotate.x;
+		spatialPose_out->rotate.y = spatialPose_lhs->rotate.y - spatialPose_rhs->rotate.y;
+		spatialPose_out->rotate.z = spatialPose_lhs->rotate.z - spatialPose_rhs->rotate.z;
 
+		// scale: division
+		// to-do: check channels
+		spatialPose_out->scale.x = spatialPose_lhs->scale.x / spatialPose_rhs->scale.x;
+		spatialPose_out->scale.y = spatialPose_lhs->scale.y / spatialPose_rhs->scale.y;
+		spatialPose_out->scale.z = spatialPose_lhs->scale.z / spatialPose_rhs->scale.z;
+
+		// translation: subtraction
+		// to-so: check channels
+		spatialPose_out->translate.x = spatialPose_lhs->translate.x - spatialPose_rhs->translate.x;
+		spatialPose_out->translate.y = spatialPose_lhs->translate.y - spatialPose_rhs->translate.y;
+		spatialPose_out->translate.z = spatialPose_lhs->translate.z - spatialPose_rhs->translate.z;
+
+		return 1;
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
@@ -111,6 +203,7 @@ a3i32 a3spatialPoseDeconcat(a3_SpatialPose* spatialPose_out, const a3_SpatialPos
 }
 
 // lerp
+extern float powf(float b, float e);//#include <math.h>
 a3i32 a3spatialPoseLerp(a3_SpatialPose* spatialPose_out, const a3_SpatialPose* spatialPose_0, const a3_SpatialPose* spatialPose_1, const a3real u)
 {
 	if (spatialPose_out && spatialPose_0 && spatialPose_1)
@@ -118,8 +211,31 @@ a3i32 a3spatialPoseLerp(a3_SpatialPose* spatialPose_out, const a3_SpatialPose* s
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
-		
 
+		// additive (addition and multiplication): 
+		//	lerp[x0,x1](u) = (x1 - x0) * u + x0
+		// multiplicative (multiplication and exponentiation): 
+		//	loglerp[x0,x1](u) = (x1 / x0) ^ u * x0
+
+		// angles: lerp is ok for the purposes of what we're doing
+		// to-do: check channels
+		spatialPose_out->rotate.v[0] = (spatialPose_1->rotate.v[0] - spatialPose_0->rotate.v[0]) * u + spatialPose_0->rotate.v[0];
+		spatialPose_out->rotate.v[1] = (spatialPose_1->rotate.v[1] - spatialPose_0->rotate.v[1]) * u + spatialPose_0->rotate.v[1];
+		spatialPose_out->rotate.v[2] = (spatialPose_1->rotate.v[2] - spatialPose_0->rotate.v[2]) * u + spatialPose_0->rotate.v[2];
+
+		// scale: log-lerp
+		// to-do: check channels
+		spatialPose_out->scale.v[0] = powf(spatialPose_1->scale.v[0] / spatialPose_0->scale.v[0], u) * spatialPose_0->scale.v[0];
+		spatialPose_out->scale.v[1] = powf(spatialPose_1->scale.v[1] / spatialPose_0->scale.v[1], u) * spatialPose_0->scale.v[1];
+		spatialPose_out->scale.v[2] = powf(spatialPose_1->scale.v[2] / spatialPose_0->scale.v[2], u) * spatialPose_0->scale.v[2];
+
+		// translate: lerp
+		// to-do: check channels
+		spatialPose_out->translate.v[0] = (spatialPose_1->translate.v[0] - spatialPose_0->translate.v[0]) * u + spatialPose_0->translate.v[0];
+		spatialPose_out->translate.v[1] = (spatialPose_1->translate.v[1] - spatialPose_0->translate.v[1]) * u + spatialPose_0->translate.v[1];
+		spatialPose_out->translate.v[2] = (spatialPose_1->translate.v[2] - spatialPose_0->translate.v[2]) * u + spatialPose_0->translate.v[2];
+
+		return 1;
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
