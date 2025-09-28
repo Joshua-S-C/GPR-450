@@ -103,7 +103,12 @@ static inline void a3kinematicsSolveInverseSingle(const a3_HierarchyState* hiera
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	// T[this_local] = T[parent_object]^-1 * T[this_object]
+	a3real4x4Product(
+		hierarchyState->localSpace->hpose_base[index].transformMat.m,			// Result: this node local-space.
+		hierarchyState->objectSpaceInv->hpose_base[parentIndex].transformMat.m,	// Left-hand: parent node object-space inverse.
+		hierarchyState->objectSpace->hpose_base[index].transformMat.m			// Right-hand: this node object-space.
+	);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -115,7 +120,8 @@ static inline void a3kinematicsSolveInverseRoot(const a3_HierarchyState* hierarc
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	// T[root_local] = T[root_object]
+	hierarchyState->localSpace->hpose_base[index] = hierarchyState->objectSpace->hpose_base[index];
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -138,7 +144,16 @@ a3i32 a3kinematicsSolveInversePartial(const a3_HierarchyState* hierarchyState, c
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+		const a3_HierarchyNode* itr = hierarchyState->hierarchy->nodes + firstIndex;
+		const a3_HierarchyNode* const end = itr + nodeCount;
+		for (; itr < end; ++itr)
+		{
+			if (itr->parentIndex >= 0)
+				a3kinematicsSolveInverseSingle(hierarchyState, itr->index, itr->parentIndex);
+			else
+				a3kinematicsSolveInverseRoot(hierarchyState, itr->index);
+		}
+		return (a3i32)(end - itr);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -194,7 +209,15 @@ void a3kinematicsUpdateHierarchyStateIK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+		a3kinematicsSolveInverse(activeHS);
+		a3hierarchyPoseRestore(activeHS->localSpace,
+			activeHS->hierarchy->numNodes,
+			poseGroup->channel,
+			poseGroup->order);
+		a3hierarchyPoseDeconcat(activeHS->animPose,	// current sample pose: goal to calculate
+			activeHS->localSpace,					// holds local pose
+			baseHS->localSpace,						// holds base pose (animPose is all identity poses)
+			activeHS->hierarchy->numNodes);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -243,7 +266,21 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	// reassign resolved transform to OBJECT-SPACE matrix
+	a3real4x4SetReal4x4(activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m, j2obj);
+	// compute OBJECT-SPACE matrix inverse
+	a3real4x4TransformInverse(activeHS->objectSpaceInv->hpose_base[nodeIndex].transformMat.m, j2obj);
+	// solve LOCAL-SPACE matrix
+	a3kinematicsSolveInverseSingle(activeHS,
+		activeHS->hierarchy->nodes[nodeIndex].index,
+		activeHS->hierarchy->nodes[nodeIndex].parentIndex);
+	// restore pose
+	a3spatialPoseRestore(&activeHS->localSpace->hpose_base[nodeIndex],
+		poseGroup->channel[nodeIndex], poseGroup->order[nodeIndex]);
+	// deconcat
+	a3spatialPoseDeconcat(&activeHS->animPose->hpose_base[nodeIndex],
+		&activeHS->localSpace->hpose_base[nodeIndex],
+		&baseHS->localSpace->hpose_base[nodeIndex]);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -270,7 +307,59 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
+	// need to properly transform joints to their parent frame and vice-versa
+	// get the hierarchy root object transform relative to the rig
+	a3mat4 const obj2rig = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_hierarchyObj].transformMat;
+	a3mat4 const rig2obj = sceneGraphState->localSpaceInv->hpose_base[sceneGraphIndex_hierarchyObj].transformMat;
 
+	// affected joint relative to hierarchy
+	a3mat4 j2obj_affected = activeHS->objectSpace->hpose_base[hierarchyObjIndex_affected].transformMat;
+
+	// SOLVER
+	{
+		// affected joint relative to rig
+		a3mat4 j2rig_affected;
+		a3real4x4ProductTransform(j2rig_affected.m, obj2rig.m, j2obj_affected.m);
+
+		// affected joint position in rig
+		a3vec3 const affectedPos_rig = j2rig_affected.v3.xyz;
+
+		// effector locator position in rig
+		a3vec3 const effectorPos_rig = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].transformMat.v3.xyz;
+
+		// bases to form
+		a3vec3 right = m_hierarchyObj.v0, fwd = m_hierarchyObj.v1, up = m_hierarchyObj.v2;
+		a3mat3 r_affected;
+
+		// compute look-at basis
+		{
+			// compute bases
+			a3real3Diff(fwd.v, effectorPos_rig.v, affectedPos_rig.v);
+			a3real3Normalize(fwd.v);
+			a3real3CrossUnit(right.v, fwd.v, up.v);
+			a3real3Cross(up.v, right.v, fwd.v);
+
+			// convert to matrix
+			a3real3SetReal3(r_affected.v0.v, right.v);
+			a3real3SetReal3(r_affected.v1.v, fwd.v);
+			a3real3SetReal3(r_affected.v2.v, up.v);
+
+			// map to joint orientation
+			a3real3x3Transpose(m_affected.m);
+			a3real3x3ConcatL(r_affected.m, m_affected.m);
+
+			// put it back in hierarchy object space
+			j2rig_affected.v0.xyz = r_affected.v0;
+			j2rig_affected.v1.xyz = r_affected.v1;
+			j2rig_affected.v2.xyz = r_affected.v2;
+		}
+
+		a3real4x4ProductTransform(j2obj_affected.m, rig2obj.m, j2rig_affected.m);
+	}
+
+	// RESOLVE IK
+	// (single-chain)
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, j2obj_affected.m);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -302,7 +391,135 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
+	// need to properly transform joints to their parent frame and vice-versa
+	// get the hierarchy root object transform relative to the rig
+	a3mat4 const obj2rig = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_hierarchyObj].transformMat;
+	a3mat4 const rig2obj = sceneGraphState->localSpaceInv->hpose_base[sceneGraphIndex_hierarchyObj].transformMat;
 
+	// affected joints relative to hierarchy
+	a3mat4 j2obj_affected_end = activeHS->objectSpace->hpose_base[hierarchyObjIndex_affected_end].transformMat;
+	a3mat4 j2obj_affected_hinge = activeHS->objectSpace->hpose_base[hierarchyObjIndex_affected_hinge].transformMat;
+	a3mat4 j2obj_affected_base = activeHS->objectSpace->hpose_base[hierarchyObjIndex_affected_base].transformMat;
+
+	// SOLVER
+	{
+		// affected joints relative to rig
+		a3mat4 j2rig_affected_end, j2rig_affected_hinge, j2rig_affected_base;
+		a3real4x4ProductTransform(j2rig_affected_end.m, obj2rig.m, j2obj_affected_end.m);
+		a3real4x4ProductTransform(j2rig_affected_hinge.m, obj2rig.m, j2obj_affected_hinge.m);
+		a3real4x4ProductTransform(j2rig_affected_base.m, obj2rig.m, j2obj_affected_base.m);
+
+		// affected joint positions in rig
+		a3vec3 affectedPos_end_rig = j2rig_affected_end.v3.xyz;
+		a3vec3 affectedPos_hinge_rig = j2rig_affected_hinge.v3.xyz;
+		a3vec3 const affectedPos_base_rig = j2rig_affected_base.v3.xyz;
+
+		// effector and constraint positions in rig
+		a3vec3 const effectorPos_end_rig = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector_end].transformMat.v3.xyz;
+		a3vec3 const constraintPos_rig = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_constraint].transformMat.v3.xyz;
+
+		// determine if solution exists
+		a3vec3 upperDiff, lowerDiff, effectorDiff, constraintDiff, normal, offset;
+		a3real upperDist, lowerDist, effectorDist, maxDist;
+		a3real3Diff(upperDiff.v, affectedPos_base_rig.v, affectedPos_hinge_rig.v);
+		a3real3Diff(lowerDiff.v, affectedPos_hinge_rig.v, affectedPos_end_rig.v);
+		a3real3Diff(effectorDiff.v, effectorPos_end_rig.v, affectedPos_base_rig.v);
+		a3real3Diff(constraintDiff.v, constraintPos_rig.v, affectedPos_base_rig.v);
+		a3real3CrossUnit(normal.v, constraintDiff.v, effectorDiff.v);
+		upperDist = a3real3Length(upperDiff.v);
+		lowerDist = a3real3Length(lowerDiff.v);
+		effectorDist = a3real3Length(effectorDiff.v);
+		a3real3MulS(effectorDiff.v, a3recipsafe(effectorDist));
+		maxDist = upperDist + lowerDist;
+		if (effectorDist >= maxDist)
+		{
+			// simple solution: end goes to farthest possible point, hinge also easy to solve
+			a3real3Add(a3real3ProductS(affectedPos_end_rig.v, effectorDiff.v, maxDist), affectedPos_base_rig.v);
+			a3real3Add(a3real3ProductS(affectedPos_hinge_rig.v, effectorDiff.v, upperDist), affectedPos_base_rig.v);
+		}
+		else
+		{
+			// not-so-simple solution: while wrist position is solved, need elbow
+			// use properties of triangles to get location
+			// area of triangle using Heron's formula
+			a3real const s = a3real_half * (effectorDist + maxDist),
+				area = a3sqrt(s * (s - effectorDist) * (s - upperDist) * (s - lowerDist)),
+				height = a3real_two * area / effectorDist,
+				base = a3sqrt(upperDist * upperDist - height * height);
+
+			a3real3MulS(a3real3Cross(offset.v, effectorDiff.v, normal.v), height);
+			a3real3ProductS(affectedPos_hinge_rig.v, effectorDiff.v, base);
+			a3real3Add(a3real3Add(affectedPos_hinge_rig.v, offset.v), affectedPos_base_rig.v);
+			affectedPos_end_rig = effectorPos_end_rig;
+		}
+
+		// bases to form
+		a3vec3 right = m_hierarchyObj.v0, fwd = m_hierarchyObj.v1;
+		a3mat3 r_affected;
+
+		// compute base node basis
+		{
+			// compute bases
+			a3real3Diff(fwd.v, affectedPos_hinge_rig.v, affectedPos_base_rig.v);
+			a3real3Normalize(fwd.v);
+			a3real3Cross(right.v, fwd.v, normal.v);
+
+			// convert to matrix
+			a3real3SetReal3(r_affected.v0.v, right.v);
+			a3real3SetReal3(r_affected.v1.v, fwd.v);
+			a3real3SetReal3(r_affected.v2.v, normal.v);
+
+			// map to joint orientation
+			a3real3x3Transpose(m_affected_base.m);
+			a3real3x3ConcatL(r_affected.m, m_affected_base.m);
+
+			// put it back in hierarchy object space
+			j2rig_affected_base.v0.xyz = r_affected.v0;
+			j2rig_affected_base.v1.xyz = r_affected.v1;
+			j2rig_affected_base.v2.xyz = r_affected.v2;
+		}
+
+		// compute hinge node basis
+		{
+			// compute bases
+			a3real3Diff(fwd.v, affectedPos_end_rig.v, affectedPos_hinge_rig.v);
+			a3real3Normalize(fwd.v);
+			a3real3Cross(right.v, fwd.v, normal.v);
+
+			// convert to matrix
+			a3real3SetReal3(r_affected.v0.v, right.v);
+			a3real3SetReal3(r_affected.v1.v, fwd.v);
+			a3real3SetReal3(r_affected.v2.v, normal.v);
+
+			// map to joint orientation
+			a3real3x3Transpose(m_affected_hinge.m);
+			a3real3x3ConcatL(r_affected.m, m_affected_hinge.m);
+
+			// put it back in hierarchy object space
+			j2rig_affected_hinge.v0.xyz = r_affected.v0;
+			j2rig_affected_hinge.v1.xyz = r_affected.v1;
+			j2rig_affected_hinge.v2.xyz = r_affected.v2;
+
+			// position
+			j2rig_affected_hinge.v3.xyz = affectedPos_hinge_rig;
+		}
+
+		// update end node basis
+		{
+			// position
+			j2rig_affected_end.v3.xyz = affectedPos_end_rig;
+		}
+
+		a3real4x4ProductTransform(j2obj_affected_end.m, rig2obj.m, j2rig_affected_end.m);
+		a3real4x4ProductTransform(j2obj_affected_hinge.m, rig2obj.m, j2rig_affected_hinge.m);
+		a3real4x4ProductTransform(j2obj_affected_base.m, rig2obj.m, j2rig_affected_base.m);
+	}
+
+	//RESOLVE IK
+	// (multi-chain: work from root to leaf too get correct transformations)
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_base, j2obj_affected_base.m);
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_hinge, j2obj_affected_hinge.m);
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_end, j2obj_affected_end.m);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3

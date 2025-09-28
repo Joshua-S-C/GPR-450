@@ -102,6 +102,8 @@ a3i32 a3spatialPoseConvert(a3_SpatialPose* spatialPose, const a3_SpatialPoseChan
 }
 
 // restore single node pose from matrix
+extern float asinf(float y_r);
+extern float atan2f(float y, float x);
 a3i32 a3spatialPoseRestore(a3_SpatialPose* spatialPose, const a3_SpatialPoseChannel channel, const a3_SpatialPoseEulerOrder order)
 {
 	if (spatialPose)
@@ -117,14 +119,37 @@ a3i32 a3spatialPoseRestore(a3_SpatialPose* spatialPose, const a3_SpatialPoseChan
 		// 
 		// R(z,y,x) = R(z) * R(y) * R(x)
 		// 
-		//   { ?  ?  ? } { ?  ?  ? } { ?  ?  ? }
-		// = { ?  ?  ? } { ?  ?  ? } { ?  ?  ? }
-		//   { ?  ?  ? } { ?  ?  ? } { ?  ?  ? }
+		//   {  cz  -sz  0 } {  cy  0   sy } { 1   0    0  }
+		// = {  sz   cz  0 } {  0   1   0  } { 0   cx  -sx }
+		//   {  0    0   1 } { -sy  0   cy } { 0   sx   cx }
 		// 
-		//   { ?  ?  ? }
-		// = { ?  ?  ? }
-		//   { ?  ?  ? }
+		//   { cz cy  cz sy sx - sz cx  cz sy cx + sz sx }
+		// = { sz cy  sz sy sx + cz cx  sz sy cx - cz sx }
+		//   {   -sy     cy sx             cy cx         }
 		//
+
+		a3mat3 R = a3mat3_identity;
+
+		// Copy translation from fourth column
+		spatialPose->translate = spatialPose->transformMat.v3;
+
+		// Get scale from columns
+		spatialPose->scale.x = a3real3Length(spatialPose->transformMat.v0.v);
+		spatialPose->scale.y = a3real3Length(spatialPose->transformMat.v1.v);
+		spatialPose->scale.z = a3real3Length(spatialPose->transformMat.v2.v);
+
+		// Get pure rotation
+		a3real3QuotientS(R.v0.v, spatialPose->transformMat.v0.v, spatialPose->scale.x);
+		a3real3QuotientS(R.v1.v, spatialPose->transformMat.v1.v, spatialPose->scale.y);
+		a3real3QuotientS(R.v2.v, spatialPose->transformMat.v2.v, spatialPose->scale.z);
+
+		// Extract angles
+		spatialPose->rotate.x = a3real_rad2deg * atan2f(R.v1.z, R.v2.z);
+		spatialPose->rotate.y = a3real_rad2deg * asinf(-R.v0.z);
+		spatialPose->rotate.z = a3real_rad2deg * atan2f(R.v0.y, R.v0.x);
+
+		// Done
+		return 1;
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
