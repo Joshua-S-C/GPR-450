@@ -116,15 +116,16 @@ extern "C"
 	
 		animation_ctrl_character,
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-3: ADD OBJECTS
-//-----------------------------------------------------------------------------
-		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-3
-//-----------------------------------------------------------------------------
+		animation_ctrl_character_rig,
+		animation_ctrl_neckLookat,
+		animation_ctrl_wristEffector_r,
+		animation_ctrl_wristConstraint_r,
+		animation_ctrl_wristEffector_l,
+		animation_ctrl_wristConstraint_l,
+		animation_ctrl_ankleEffector_r,
+		animation_ctrl_ankleConstraint_r,
+		animation_ctrl_ankleEffector_l,
+		animation_ctrl_ankleConstraint_l,
 
 		animation_ctrlmode_max
 	} a3_Scene_Animation_ControlTarget;
@@ -225,20 +226,21 @@ extern "C"
 					obj_skybox[1];
 				a3_SceneObject
 					obj_teapot[1];
-			
+				
 				a3_SceneObject
 					obj_skeleton_ctrl[1],
+					obj_skeleton_rig[1];
+				a3_SceneObject
+					obj_skeleton_neckLookat_ctrl[1],
+					obj_skeleton_wristEffector_r_ctrl[1],
+					obj_skeleton_wristConstraint_r_ctrl[1],
+					obj_skeleton_wristEffector_l_ctrl[1],
+					obj_skeleton_wristConstraint_l_ctrl[1],
+					obj_skeleton_ankleEffector_r_ctrl[1],
+					obj_skeleton_ankleConstraint_r_ctrl[1],
+					obj_skeleton_ankleEffector_l_ctrl[1],
+					obj_skeleton_ankleConstraint_l_ctrl[1],
 					obj_skeleton[1];
-
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-3: REPLACE AND ADD OBJECTS
-//-----------------------------------------------------------------------------
-				
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-3
-//-----------------------------------------------------------------------------
 			};
 		};
 		union {

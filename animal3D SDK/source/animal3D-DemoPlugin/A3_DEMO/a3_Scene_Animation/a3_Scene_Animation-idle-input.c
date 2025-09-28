@@ -139,15 +139,19 @@ void a3animation_input(a3_DemoState* demoState, a3_Scene_Animation* scene, a3f64
 		a3demo_input_controlObject(demoState, sceneObject, dt, a3real_one, a3real_zero);
 		break;
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-3: ADD OBJECTS
-//-----------------------------------------------------------------------------
-	
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-3
-//-----------------------------------------------------------------------------
+	case animation_ctrl_character_rig:
+	case animation_ctrl_neckLookat:
+	case animation_ctrl_wristEffector_r:
+	case animation_ctrl_wristConstraint_r:
+	case animation_ctrl_wristEffector_l:
+	case animation_ctrl_wristConstraint_l:
+	case animation_ctrl_ankleEffector_r:
+	case animation_ctrl_ankleConstraint_r:
+	case animation_ctrl_ankleEffector_l:
+	case animation_ctrl_ankleConstraint_l:
+		sceneObject = scene->obj_skeleton_ctrl + scene->ctrl_target - animation_ctrl_character;
+		a3demo_input_controlObject(demoState, sceneObject, dt, a3real_one, a3real_zero);
+		break;
 
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PREP-4: ADD CONTROL

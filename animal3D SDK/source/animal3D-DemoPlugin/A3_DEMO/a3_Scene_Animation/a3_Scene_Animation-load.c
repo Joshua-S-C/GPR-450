@@ -45,15 +45,128 @@
 //****END-TO-DO-PREP-4
 //-----------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-3: ADD IK ROUTINES
-//-----------------------------------------------------------------------------
+void a3animation_load_resetEffectors(a3_Scene_Animation* scene,
+	a3_HierarchyState* hierarchyState, a3_HierarchyPoseGroup const* poseGroup)
+{
+	a3_SceneObject* sceneObject = scene->obj_skeleton;
+	a3ui32 j = sceneObject->sceneGraphIndex;
 
+	// need to properly transform joints to their parent frame
+	a3mat4 const skeletonToControl = scene->sceneGraphState->localSpace->hpose_base[j].transformMat;
+	a3vec4 controlLocator;
 
+	// bail
+	if (!hierarchyState->hierarchy)
+		return;
 
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-3
-//-----------------------------------------------------------------------------
+	// look-at effector
+	// position in front of neck
+	j = a3hierarchyGetNodeIndex(scene->hierarchy_skel, "mixamorig:Neck");
+	sceneObject = scene->obj_skeleton_neckLookat_ctrl;
+	a3real4Real4x4Product(controlLocator.v, skeletonToControl.m,
+		hierarchyState->objectSpace->hpose_base[j].transformMat.v3.v);
+	sceneObject->position.x = controlLocator.x;
+	sceneObject->position.y = controlLocator.y + a3real_four;
+	sceneObject->position.z = controlLocator.z;
+	sceneObject->scale.x = a3real_third;
+	sceneObject->scaleMode = 1;
+
+	// right wrist effector
+	// position above wrist
+	j = a3hierarchyGetNodeIndex(scene->hierarchy_skel, "mixamorig:RightHand");
+	sceneObject = scene->obj_skeleton_wristEffector_r_ctrl;
+	a3real4Real4x4Product(controlLocator.v, skeletonToControl.m,
+		hierarchyState->objectSpace->hpose_base[j].transformMat.v3.v);
+	sceneObject->position.x = controlLocator.x + a3real_one;
+	sceneObject->position.y = controlLocator.y + a3real_one;
+	sceneObject->position.z = controlLocator.z + a3real_one;
+	sceneObject->scale.x = a3real_third;
+	sceneObject->scaleMode = 1;
+
+	// right wrist constraint
+	// position behind elbow
+	j = a3hierarchyGetNodeIndex(scene->hierarchy_skel, "mixamorig:RightForeArm");
+	sceneObject = scene->obj_skeleton_wristConstraint_r_ctrl;
+	a3real4Real4x4Product(controlLocator.v, skeletonToControl.m,
+		hierarchyState->objectSpace->hpose_base[j].transformMat.v3.v);
+	sceneObject->position.x = controlLocator.x + a3real_half;
+	sceneObject->position.y = controlLocator.y - a3real_half;
+	sceneObject->position.z = controlLocator.z + a3real_half;
+	sceneObject->scale.x = a3real_third;
+	sceneObject->scaleMode = 1;
+
+	// left wrist effector
+	// position above wrist
+	j = a3hierarchyGetNodeIndex(scene->hierarchy_skel, "mixamorig:LeftHand");
+	sceneObject = scene->obj_skeleton_wristEffector_l_ctrl;
+	a3real4Real4x4Product(controlLocator.v, skeletonToControl.m,
+		hierarchyState->objectSpace->hpose_base[j].transformMat.v3.v);
+	sceneObject->position.x = controlLocator.x - a3real_one;
+	sceneObject->position.y = controlLocator.y + a3real_one;
+	sceneObject->position.z = controlLocator.z + a3real_one;
+	sceneObject->scale.x = a3real_third;
+	sceneObject->scaleMode = 1;
+
+	// left wrist constraint
+	// position behind elbow
+	j = a3hierarchyGetNodeIndex(scene->hierarchy_skel, "mixamorig:LeftForeArm");
+	sceneObject = scene->obj_skeleton_wristConstraint_l_ctrl;
+	a3real4Real4x4Product(controlLocator.v, skeletonToControl.m,
+		hierarchyState->objectSpace->hpose_base[j].transformMat.v3.v);
+	sceneObject->position.x = controlLocator.x - a3real_half;
+	sceneObject->position.y = controlLocator.y - a3real_half;
+	sceneObject->position.z = controlLocator.z + a3real_half;
+	sceneObject->scale.x = a3real_third;
+	sceneObject->scaleMode = 1;
+
+	// right ankle effector
+	// position on ankle
+	j = a3hierarchyGetNodeIndex(scene->hierarchy_skel, "mixamorig:RightFoot");
+	sceneObject = scene->obj_skeleton_ankleEffector_r_ctrl;
+	a3real4Real4x4Product(controlLocator.v, skeletonToControl.m,
+		hierarchyState->objectSpace->hpose_base[j].transformMat.v3.v);
+	sceneObject->position.x = controlLocator.x + a3real_half;
+	sceneObject->position.y = controlLocator.y;
+	sceneObject->position.z = controlLocator.z;
+	sceneObject->scale.x = a3real_third;
+	sceneObject->scaleMode = 1;
+
+	// right ankle constraint
+	// position in front of knee
+	j = a3hierarchyGetNodeIndex(scene->hierarchy_skel, "mixamorig:RightLeg");
+	sceneObject = scene->obj_skeleton_ankleConstraint_r_ctrl;
+	a3real4Real4x4Product(controlLocator.v, skeletonToControl.m,
+		hierarchyState->objectSpace->hpose_base[j].transformMat.v3.v);
+	sceneObject->position.x = controlLocator.x + a3real_quarter;
+	sceneObject->position.y = controlLocator.y + a3real_half;
+	sceneObject->position.z = controlLocator.z;
+	sceneObject->scale.x = a3real_third;
+	sceneObject->scaleMode = 1;
+
+	// left ankle effector
+	// position on ankle
+	j = a3hierarchyGetNodeIndex(scene->hierarchy_skel, "mixamorig:LeftFoot");
+	sceneObject = scene->obj_skeleton_ankleEffector_l_ctrl;
+	a3real4Real4x4Product(controlLocator.v, skeletonToControl.m,
+		hierarchyState->objectSpace->hpose_base[j].transformMat.v3.v);
+	sceneObject->position.x = controlLocator.x - a3real_half;
+	sceneObject->position.y = controlLocator.y;
+	sceneObject->position.z = controlLocator.z;
+	sceneObject->scale.x = a3real_third;
+	sceneObject->scaleMode = 1;
+
+	// left ankle constraint
+	// position in front of knee
+	j = a3hierarchyGetNodeIndex(scene->hierarchy_skel, "mixamorig:LeftLeg");
+	sceneObject = scene->obj_skeleton_ankleConstraint_l_ctrl;
+	a3real4Real4x4Product(controlLocator.v, skeletonToControl.m,
+		hierarchyState->objectSpace->hpose_base[j].transformMat.v3.v);
+	sceneObject->position.x = controlLocator.x - a3real_quarter;
+	sceneObject->position.y = controlLocator.y + a3real_half;
+	sceneObject->position.z = controlLocator.z;
+	sceneObject->scale.x = a3real_third;
+	sceneObject->scaleMode = 1;
+}
 
 // utility to load animation
 void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animation* scene)
@@ -63,7 +176,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 
 
 	a3_FileStream fileStream[1] = { 0 };
-	const a3byte* const animationStream = "./data/gpro25_base_anim_active_2.dat";
+	const a3byte* const animationStream = "./data/gpro25_base_anim_active_3.dat";
 	const a3boolean force_disable_streaming = false;
 
 	
@@ -144,18 +257,18 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 		a3hierarchySetNode(scene->sceneGraph,  4, 0, "scene_teapot");
 
 		a3hierarchySetNode(scene->sceneGraph,  5, 0, "scene_skeleton_ctrl");
-		a3hierarchySetNode(scene->sceneGraph,  6, 5, "scene_skeleton");
-
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-3: REPLACE AND ADD SCENE GRAPH NODES
-//-----------------------------------------------------------------------------
+		a3hierarchySetNode(scene->sceneGraph,  6, 5, "scene_skeleton_rig");
+		a3hierarchySetNode(scene->sceneGraph,  7, 6, "scene_skeleton_neckLookat_ctrl");
+		a3hierarchySetNode(scene->sceneGraph,  8, 6, "scene_skeleton_wristEff_r_ctrl");
+		a3hierarchySetNode(scene->sceneGraph,  9, 6, "scene_skeleton_wristCon_r_ctrl");
+		a3hierarchySetNode(scene->sceneGraph, 10, 6, "scene_skeleton_wristEff_l_ctrl");
+		a3hierarchySetNode(scene->sceneGraph, 11, 6, "scene_skeleton_wristCon_l_ctrl");
+		a3hierarchySetNode(scene->sceneGraph, 12, 6, "scene_skeleton_ankleEff_r_ctrl");
+		a3hierarchySetNode(scene->sceneGraph, 13, 6, "scene_skeleton_ankleCon_r_ctrl");
+		a3hierarchySetNode(scene->sceneGraph, 14, 6, "scene_skeleton_ankleEff_l_ctrl");
+		a3hierarchySetNode(scene->sceneGraph, 15, 6, "scene_skeleton_ankleCon_l_ctrl");
+		a3hierarchySetNode(scene->sceneGraph, 16, 5, "scene_skeleton");
 		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-3
-//-----------------------------------------------------------------------------
-
 		// manually set up a skeleton
 		if (!using_character)
 		{
@@ -464,17 +577,17 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 	scene->obj_teapot->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_teapot");
 	
 	scene->obj_skeleton_ctrl->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_ctrl");
+	scene->obj_skeleton_rig->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_rig");
+	scene->obj_skeleton_neckLookat_ctrl->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_neckLookat_ctrl");
+	scene->obj_skeleton_wristEffector_r_ctrl->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_wristEff_r_ctrl");
+	scene->obj_skeleton_wristConstraint_r_ctrl->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_wristCon_r_ctrl");
+	scene->obj_skeleton_wristEffector_l_ctrl->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_wristEff_l_ctrl");
+	scene->obj_skeleton_wristConstraint_l_ctrl->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_wristCon_l_ctrl");
+	scene->obj_skeleton_ankleEffector_r_ctrl->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_ankleEff_r_ctrl");
+	scene->obj_skeleton_ankleConstraint_r_ctrl->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_ankleCon_r_ctrl");
+	scene->obj_skeleton_ankleEffector_l_ctrl->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_ankleEff_l_ctrl");
+	scene->obj_skeleton_ankleConstraint_l_ctrl->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton_ankleCon_l_ctrl");
 	scene->obj_skeleton->sceneGraphIndex = a3hierarchyGetNodeIndex(scene->sceneGraph, "scene_skeleton");
-
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-3: ADD REPLACE AND ADD NODES
-//-----------------------------------------------------------------------------
-	
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-3
-//-----------------------------------------------------------------------------
 
 	// scene graph state
 	scene->sceneGraphState->hierarchy = 0;
@@ -613,15 +726,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 			a3animation_update_animation(scene, 0.0, false);
 			a3animation_update_sceneGraph(scene, 0.0);
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-3: INIT IK EFFECTORS
-//-----------------------------------------------------------------------------
-			
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-3
-//-----------------------------------------------------------------------------
+			a3animation_load_resetEffectors(scene, scene->hierarchyState_skel_fk, hierarchyPoseGroup);
 		}
 	}
 }

@@ -179,7 +179,7 @@ void a3demo_loadGeometry(a3_DemoState *demoState)
 
 	// file streaming (if requested)
 	a3_FileStream fileStream[1] = { 0 };
-	const a3byte *const geometryStream = "./data/gpro25_base_geom_active_2.dat";
+	const a3byte *const geometryStream = "./data/gpro25_base_geom_active_3.dat";
 	const a3boolean force_disable_streaming = false;
 
 	// geometry data

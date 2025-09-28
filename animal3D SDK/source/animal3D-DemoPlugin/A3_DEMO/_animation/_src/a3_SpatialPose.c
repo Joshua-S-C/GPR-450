@@ -110,7 +110,21 @@ a3i32 a3spatialPoseRestore(a3_SpatialPose* spatialPose, const a3_SpatialPoseChan
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 		
-
+		// ****HINT: this is the opposite of the above function!
+		// If you understand how the transformation was assembled, 
+		// then the reverse process is used to pull break it down.
+		// ****HINT: for rotation, first focus on ZYX order: 
+		// 
+		// R(z,y,x) = R(z) * R(y) * R(x)
+		// 
+		//   { ?  ?  ? } { ?  ?  ? } { ?  ?  ? }
+		// = { ?  ?  ? } { ?  ?  ? } { ?  ?  ? }
+		//   { ?  ?  ? } { ?  ?  ? } { ?  ?  ? }
+		// 
+		//   { ?  ?  ? }
+		// = { ?  ?  ? }
+		//   { ?  ?  ? }
+		//
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
