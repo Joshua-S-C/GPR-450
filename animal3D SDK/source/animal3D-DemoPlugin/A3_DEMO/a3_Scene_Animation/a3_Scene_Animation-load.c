@@ -65,6 +65,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 	a3_FileStream fileStream[1] = { 0 };
 	const a3byte* const animationStream = "./data/gpro25_base_anim_active.dat";
 	const a3boolean force_disable_streaming = true;
+	// TODO This is check file loading. Set to False
 
 	
 	// object pointers
