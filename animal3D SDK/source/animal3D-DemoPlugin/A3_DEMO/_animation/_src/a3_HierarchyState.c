@@ -296,24 +296,25 @@ a3i32 a3hierarchyStateUpdateObjectBindToCurrent(const a3_HierarchyState* state, 
 	return -1;
 }
 
-a3byte calculateValue(FILE* file, char* value, char* line)
+a3byte calculateValue(FILE* file, char* value, char* line, char* currLine)
 {
-	char currLine[512];
+	long pos = ftell(file);
 
-	if (!fgets(currLine, sizeof(currLine), file))
+	if (!fgets(currLine, 512, file))
 	{
-		return true;
+		return false;
 	}
 
 	if (currLine[0] == '[' || currLine[0] == '#')
 	{
+		fseek(file, pos, SEEK_SET);
 		return false;
 	}
 
 	return sscanf(currLine, "%s %s", line, value) == 2;
 }
 
-a3byte handleHeaders(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGroup_out, FILE* file)
+a3byte handleHeaders(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGroup_out, FILE* file, char* currLine, a3f32* scale)
 {
 	char line[512];
 	char value[64];
@@ -321,7 +322,7 @@ a3byte handleHeaders(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGro
 	a3f32 unitScale = 1;
 	a3f32 scaleFactor = 1;
 
-	while (calculateValue(file, value, line))
+	while (calculateValue(file, value, line, currLine))
 	{
 		if (strstr(line, "FileType"))
 		{
@@ -354,13 +355,15 @@ a3byte handleHeaders(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGro
 		{
 			printf("%s\n", value);
 
-			a3hierarchyCreate(hierarchy_out, (a3ui32)atoi(value), NULL);
+			// Not implemented yet
+			//a3hierarchyCreate(hierarchy_out, (a3ui32)atoi(value), NULL);
 		}
 		else if (strstr(line, "NumFrames"))
 		{
 			printf("%s\n", value);
 
-			a3hierarchyPoseGroupCreate(poseGroup_out, hierarchy_out, (a3ui32)atoi(value));
+			// Not implemented yet
+			//a3hierarchyPoseGroupCreate(poseGroup_out, hierarchy_out, (a3ui32)atoi(value));
 		}
 		else if (strstr(line, "EulerRotationOrder"))
 		{
@@ -368,7 +371,8 @@ a3byte handleHeaders(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGro
 
 			if (strstr(line, "ZYX"))
 			{
-				*poseGroup_out->order = a3poseEulerOrder_zyx;
+				// Not implemented yet
+				//*poseGroup_out->order = a3poseEulerOrder_zyx;
 			}
 		}
 		else if (strstr(line, "CalibrationUnits"))
@@ -386,7 +390,8 @@ a3byte handleHeaders(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGro
 
 			if (strstr(value, "Y"))
 			{
-				*poseGroup_out->channel = a3poseChannel_scale_y;
+				// Not implemented yet
+				//*poseGroup_out->channel = a3poseChannel_scale_y;
 			}
 		}
 		else if (strstr(line, "ScaleFactor"))
@@ -397,12 +402,14 @@ a3byte handleHeaders(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGro
 		}
 	}
 
+	*scale = scaleFactor * unitScale;
+
 	return true;
 }
 
-a3byte handleSegmentsAndHierarchy(a3_Hierarchy* hierarchy_out, FILE* file)
+a3byte handleSegmentsAndHierarchy(a3_Hierarchy* hierarchy_out, FILE* file, char* currLine)
 {
-	char line[512];
+	//char line[512];
 	char child[a3node_nameSize];
 	char parent[a3node_nameSize];
 
@@ -411,27 +418,79 @@ a3byte handleSegmentsAndHierarchy(a3_Hierarchy* hierarchy_out, FILE* file)
 
 	printf("\nSegments and Hierarchy\n");
 
-	while (fgets(line, sizeof(line), file) && line[0] != '[' && line[0] != '#')
+	while (true)
 	{
-		//sscanf(line, "%s %s", &child, &parent);
-		printf("%s %s\n", child, parent);
-
-		parentIndex = a3hierarchyGetNodeIndex(hierarchy_out, parent);
-
-		a3hierarchySetNode(hierarchy_out, childIndex, parentIndex, child);
-
+		long pos = ftell(file);
+	
+		if (!fgets(currLine, 512, file))
+		{
+			break;
+		}
+	
+		if (currLine[0] == '[' || currLine[0] == '#')
+		{
+			fseek(file, pos, SEEK_SET);
+			break;
+		}
+	
+		if (sscanf(currLine, "%s %s", &child, &parent) == 2)
+		{
+			printf("%s %s\n", child, parent);
+	
+			parentIndex = a3hierarchyGetNodeIndex(hierarchy_out, parent);
+	
+			a3hierarchySetNode(hierarchy_out, childIndex, parentIndex, child);
+		}		
+	
 		childIndex++;
 	}
 
 	return true;
 }
 
-a3byte handleBasePosition()
+a3byte handleBasePosition(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGroup_out, FILE* file, char* currLine, a3f32 scalePass)
 {
-	//char line[512];
+	char value[a3node_nameSize];
 
+	a3vec3 posVec;
+	a3vec3 rotVec;
+	a3f32 scale;
+
+	printf("\nBase Position\n");
+
+	while (true)
+	{
+		long pos = ftell(file);
+
+		if (!fgets(currLine, 512, file))
+		{
+			break;
+		}
+
+		if (currLine[0] == '[' || currLine[0] == '#')
+		{
+			fseek(file, pos, SEEK_SET);
+			break;
+		}
+
+		if (sscanf(currLine, "%s %f %f %f %f %f %f %f", value, &posVec.x, &posVec.y, &posVec.z, &rotVec.x, &rotVec.y, &rotVec.z, &scale) == 8)
+		{
+			printf("%s %f %f %f %f %f %f %f\n", value, posVec.x, posVec.y, posVec.z, rotVec.x, rotVec.y, rotVec.z, scale);
+			a3i32 index = a3hierarchyGetNodeIndex(hierarchy_out, value);
+
+			// Not implemented yet
+			//a3spatialPoseSetTranslation(&poseGroup_out->hpose[0].hpose_base[index], posVec.x * scalePass, posVec.y * scalePass, posVec.z * scalePass);
+			//a3spatialPoseSetRotation(&poseGroup_out->hpose[0].hpose_base[index], rotVec.x, rotVec.y, rotVec.z);
+			//a3spatialPoseSetScale(&poseGroup_out->hpose[0].hpose_base[index], scale, scale, scale);
+		}
+	}
 
 	return true;
+}
+
+a3byte handlePoses(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGroup_out, FILE* file, char* currLine, a3f32 scalePass)
+{
+
 }
 
 
@@ -448,8 +507,8 @@ a3i32 a3hierarchyPoseGroupLoadHTR(a3_HierarchyPoseGroup* poseGroup_out, a3_Hiera
 		FILE* file = fopen(resourceFilePath, "r");
 
 		char line[512];
-		int numSegments = 0;
-		int numFrames = 0;
+
+		a3f32 scale = 1;
 
 		if (!file)
 		{
@@ -457,27 +516,35 @@ a3i32 a3hierarchyPoseGroupLoadHTR(a3_HierarchyPoseGroup* poseGroup_out, a3_Hiera
 			return -1;			
 		}
 
-		while (fgets(line, sizeof(line), file))
+		while (fgets(line, sizeof(line), file) != NULL)
 		{
 			if (strstr(line, "[Header]"))
 			{
-				if (!handleHeaders(hierarchy_out, poseGroup_out, file))
+				if (!handleHeaders(hierarchy_out, poseGroup_out, file, line, &scale))
+				{
+					return -1;
+				}
+			}		
+			else if (strstr(line, "[SegmentNames&Hierarchy]"))
+			{
+				if (!handleSegmentsAndHierarchy(hierarchy_out, file, line))
+				{					
+					return -1;
+				}
+			}		
+			else if (strstr(line, "[BasePosition]"))
+			{
+				if (!handleBasePosition(hierarchy_out, poseGroup_out, file, line, scale))
 				{
 					return -1;
 				}
 			}
-		
-			//if (strstr(line, "[Segments&Hierarchy]"))
-			//{
-			//	if (!handleSegmentsAndHierarchy(hierarchy_out, file))
-			//	{
-			//		return -1;
-			//	}
-			//}
-		
-			if (strstr(line, "[BasePosition]"))
+			else if (line[0] == '#')
 			{
-		
+				if (!true)
+				{
+					return -1;
+				}
 			}
 		}
 
