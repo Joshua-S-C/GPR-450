@@ -283,6 +283,124 @@ a3i32 a3hierarchyStateUpdateObjectBindToCurrent(const a3_HierarchyState* state, 
 	return -1;
 }
 
+a3byte calculateValue(FILE* file, char* value, char* line)
+{
+	char currLine[512];
+
+	if (!fgets(currLine, sizeof(currLine), file))
+	{
+		return true;
+	}
+
+	currLine[strcspn(currLine, "\n")] = "\0";
+
+	if (currLine[0] == '[' || currLine[0] == '#')
+	{
+		return false;
+	}
+
+	return sscanf(currLine, "%s %s", line, value) == 2;
+}
+
+a3byte handleHeaders(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGroup_out, FILE* file)
+{
+	char line[512];
+	char value[64];
+
+	a3f32 unitScale = 1;
+	a3f32 scaleFactor = 1;
+
+	while (calculateValue(file, value, line))
+	{
+		if (strstr(line, "FileType"))
+		{
+			if (!strstr(value, "HTR"))
+			{
+				return false;
+			}
+		}
+		else if (strstr(line, "DataType"))
+		{
+			if (!strstr(value, "HTRS"))
+			{
+				return false;
+			}
+		}
+		else if (strstr(line, "FileVersion"))
+		{
+			if (atoi(value) != 1)
+			{
+				return false;
+			}
+		}
+		else if (strstr(line, "NumSegments"))
+		{
+			a3hierarchyCreate(hierarchy_out, (a3ui32)atoi(value), NULL);
+		}
+		else if (strstr(line, "NumFrames"))
+		{
+			a3hierarchyPoseGroupCreate(poseGroup_out, hierarchy_out, (a3ui32)atoi(value));
+		}
+		else if (strstr(line, "EulerRotationOrder"))
+		{
+			if (strstr(line, "ZYX"))
+			{
+				*poseGroup_out->order = a3poseEulerOrder_zyx;
+			}
+		}
+		else if (strstr(line, "CalibrationUnits"))
+		{
+			if (strstr(value, "mm"))
+			{
+				unitScale = 1.0f / 10.0f;
+			}
+		}
+		else if (strstr(line, "BoneLengthAxis"))
+		{
+			if (strstr(value, "Y"))
+			{
+				*poseGroup_out->channel = a3poseChannel_scale_y;
+			}
+		}
+		else if (strstr(line, "ScaleFactor"))
+		{
+			scaleFactor = (a3f32)atof(value);
+		}
+	}
+
+	return true;
+}
+
+a3byte handleSegmentsAndHierarchy(a3_Hierarchy* hierarchy_out, FILE* file)
+{
+	char line[512];
+	char child[a3node_nameSize];
+	char parent[a3node_nameSize];
+
+	a3i32 childIndex = 0;
+	a3i32 parentIndex = 0;
+
+	while (fgets(line, sizeof(line), file) && line[0] != '[' && line[0] != '#')
+	{
+		sscanf(line, "%s %s", &child, &parent);
+
+		parentIndex = a3hierarchyGetNodeIndex(hierarchy_out, parent);
+
+		a3hierarchySetNode(hierarchy_out, childIndex, parentIndex, child);
+
+		childIndex++;
+	}
+
+	return true;
+}
+
+a3byte handleBasePosition()
+{
+	char line[512];
+
+	return true;
+}
+
 
 //-----------------------------------------------------------------------------
 
@@ -294,14 +412,49 @@ a3i32 a3hierarchyPoseGroupLoadHTR(a3_HierarchyPoseGroup* poseGroup_out, a3_Hiera
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
-		
+		FILE* file = fopen(resourceFilePath, "r");
 
+		char line[512];
+		int numSegments = 0;
+		int numFrames = 0;
+
+		if (!file)
+		{
+			printf("Cannot find file!");
+			return -1;			
+		}
+
+		while (!fgets(line, sizeof(line), file))
+		{
+			if (strstr(line, "[Header]"))
+			{
+				if (!handleHeaders(hierarchy_out, poseGroup_out, file))
+				{
+					return -1;
+				}
+			}
+
+			if (strstr(line, "[Segments&Hierarchy]"))
+			{
+				if (!handleSegmentsAndHierarchy(hierarchy_out, file))
+				{
+					return -1;
+				}
+			}
+
+			if (strstr(line, "[BasePosition]"))
+			{
+
+			}
+		}
+		
+		fclose(file);		
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
 //-----------------------------------------------------------------------------
 	}
-	return -1;
+	return 1;
 }
 
 // load BVH file, read and store complete pose group and hierarchy
