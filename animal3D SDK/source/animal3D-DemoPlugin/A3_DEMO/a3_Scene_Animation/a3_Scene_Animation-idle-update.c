@@ -178,9 +178,9 @@ void a3animation_update_sceneGraph(a3_Scene_Animation* scene, a3f64 const dt)
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-2: UNCOMMENT ME WHEN FK IMPLEMENTED
 //-----------------------------------------------------------------------------
-	//a3kinematicsSolveForward(scene->sceneGraphState);
-	//a3hierarchyStateUpdateLocalInverse(scene->sceneGraphState);
-	//a3hierarchyStateUpdateObjectInverse(scene->sceneGraphState);
+	a3kinematicsSolveForward(scene->sceneGraphState);
+	a3hierarchyStateUpdateLocalInverse(scene->sceneGraphState);
+	a3hierarchyStateUpdateObjectInverse(scene->sceneGraphState);
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
 //-----------------------------------------------------------------------------
@@ -188,16 +188,16 @@ void a3animation_update_sceneGraph(a3_Scene_Animation* scene, a3f64 const dt)
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-2: REMOVE ME WHEN FK IMPLEMENTED
 //-----------------------------------------------------------------------------
-	for (i = 0; i < animationMaxCount_sceneObject; ++i)
-	{
-		//****HINT: consider this for one part of the core FK function - what does this do?
-		scene->sceneGraphState->objectSpace->hpose_base[i].transformMat = scene->sceneGraphState->localSpace->hpose_base[i].transformMat;
+	//for (i = 0; i < animationMaxCount_sceneObject; ++i)
+	//{
+	//	//****HINT: consider this for one part of the core FK function - what does this do?
+	//	scene->sceneGraphState->objectSpace->hpose_base[i].transformMat = scene->sceneGraphState->localSpace->hpose_base[i].transformMat;
 
-		//****HINT: consider this for updating object-space inverses
-		a3real4x4TransformInverse(
-			scene->sceneGraphState->objectSpaceInv->hpose_base[i].transformMat.m,
-			scene->sceneGraphState->objectSpace->hpose_base[i].transformMat.m);
-	}
+	//	//****HINT: consider this for updating object-space inverses
+	//	a3real4x4TransformInverse(
+	//		scene->sceneGraphState->objectSpaceInv->hpose_base[i].transformMat.m,
+	//		scene->sceneGraphState->objectSpace->hpose_base[i].transformMat.m);
+	//}
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
 //-----------------------------------------------------------------------------

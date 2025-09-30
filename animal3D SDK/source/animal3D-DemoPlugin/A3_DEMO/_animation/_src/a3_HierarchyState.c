@@ -230,8 +230,12 @@ a3i32 a3hierarchyStateUpdateLocalInverse(const a3_HierarchyState* state)
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-2: IMPLEMENT ME
 //-----------------------------------------------------------------------------
-		
-
+		for (i = 0; i < state->hierarchy->numNodes; ++i)
+		{
+			a3real4x4TransformInverse(
+				state->localSpaceInv->hpose_base[i].transformMat.m,
+				state->localSpace->hpose_base[i].transformMat.m);
+		}
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-2
@@ -253,7 +257,8 @@ a3i32 a3hierarchyStateUpdateObjectInverse(const a3_HierarchyState* state)
 		
 		for (i = 0; i < state->hierarchy->numNodes; ++i)
 		{
-			a3real4x4TransformInverse(state->objectSpaceInv->hpose_base[i].transformMat.m,
+			a3real4x4TransformInverse(
+				state->objectSpaceInv->hpose_base[i].transformMat.m,
 				state->objectSpace->hpose_base[i].transformMat.m);
 		}
 
@@ -277,7 +282,8 @@ a3i32 a3hierarchyStateUpdateObjectBindToCurrent(const a3_HierarchyState* state, 
 
 		for (i = 0; i < state->hierarchy->numNodes; ++i)
 		{
-			a3real4x4Product(state->objectSpaceBindToCurrent->hpose_base[i].transformMat.m,
+			a3real4x4Product(
+				state->objectSpaceBindToCurrent->hpose_base[i].transformMat.m,
 				state->objectSpace->hpose_base[i].transformMat.m,
 				state_bind->objectSpaceInv->hpose_base[i].transformMat.m);
 		}
@@ -299,7 +305,7 @@ a3byte calculateValue(FILE* file, char* value, char* line)
 		return true;
 	}
 
-	currLine[strcspn(currLine, "\n")] = "\0";
+	currLine[strcspn(currLine, "\n")] = '\0';
 
 	if (currLine[0] == '[' || currLine[0] == '#')
 	{
@@ -403,7 +409,7 @@ a3byte handleSegmentsAndHierarchy(a3_Hierarchy* hierarchy_out, FILE* file)
 
 a3byte handleBasePosition()
 {
-	char line[512];
+	//char line[512];
 
 	return true;
 }
