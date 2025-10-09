@@ -380,6 +380,24 @@ a3byte handleHeaders(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGro
 				unitScale = 1.0f / 10.0f;
 			}
 		}
+		else if (strstr(line, "RotationUnits"))
+		{
+			printf("%s\n", value);
+
+			if (strstr(value, "Degrees"))
+			{
+				printf("%s\nRotationUnits read but not assigned", value);
+			}
+		}
+		else if (strstr(line, "GlobalAxisofGravity"))
+		{
+			printf("%s\n", value);
+
+			if (strstr(value, "Y"))
+			{
+				printf("%s\nGlobalAxisofGravity read but not assigned", value);
+			}
+		}
 		else if (strstr(line, "BoneLengthAxis"))
 		{
 			printf("%s\n", value);
@@ -394,6 +412,8 @@ a3byte handleHeaders(a3_Hierarchy* hierarchy_out, a3_HierarchyPoseGroup* poseGro
 			printf("%s\n", value);
 
 			scaleFactor = (a3f32)atof(value);
+
+			return true;
 		}
 	}
 
@@ -467,13 +487,13 @@ a3i32 a3hierarchyPoseGroupLoadHTR(a3_HierarchyPoseGroup* poseGroup_out, a3_Hiera
 				}
 			}
 		
-			//if (strstr(line, "[Segments&Hierarchy]"))
-			//{
-			//	if (!handleSegmentsAndHierarchy(hierarchy_out, file))
-			//	{
-			//		return -1;
-			//	}
-			//}
+			if (strstr(line, "[SegmentNames&Hierarchy]"))
+			{
+				if (!handleSegmentsAndHierarchy(hierarchy_out, file))
+				{
+					return -1;
+				}
+			}
 		
 			if (strstr(line, "[BasePosition]"))
 			{
