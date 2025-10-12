@@ -187,10 +187,6 @@ void a3animation_update_applyEffectors(a3_Scene_Animation* scene,
 	}
 }
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: ADD UPDATE LOGIC
-//-----------------------------------------------------------------------------
-
 void a3animation_update_animation_skeletal(
 	a3_Scene_Animation* scene, a3f64 const dt,
 	a3boolean const updateIK)
@@ -198,11 +194,7 @@ void a3animation_update_animation_skeletal(
 	a3ui32 h = 0;
 	a3ui32 n = sizeof(scene->clipCtrl) / sizeof(*scene->clipCtrl);
 	a3ui32 n_anim = 3;//controlled only
-	a3ui32 sampleIndex0, sampleIndex1;
-
-	// FK/IK blend
-	//	-> both states are simultaneously available; select either or in-between
-	a3real blend_fk_ik = a3real_one;// 0 = fk, 1 = ik
+	a3real blend_fk_ik = a3real_zero;// 0 = fk, 1 = ik
 
 	a3_HierarchyState* activeHS_fk = scene->hierarchyState_skel_fk;
 	a3_HierarchyState* activeHS_ik = scene->hierarchyState_skel_ik;
@@ -218,29 +210,43 @@ void a3animation_update_animation_skeletal(
 	for (h = 0; h < n_anim; ++h)
 	{
 		a3_ClipController* clipCtrl_fk = &scene->clipCtrl[h];
+		a3_HierarchyState* activeHS_tree = &scene->hierarchyState_skel_blend[h];
+		a3ui32 sampleIndex0, sampleIndex1;
 
 		// update clip controller, keyframe lerp
 		a3clipControllerUpdate(clipCtrl_fk, dt);
-	}
-
-	// select single clip
-	{
-		a3_ClipController const* clipCtrl = scene->clipCtrl_idle_f;
-		sampleIndex0 = scene->clipPool->keyframe[clipCtrl->keyframeIndex].sampleIndex0;
-		sampleIndex1 = scene->clipPool->keyframe[clipCtrl->keyframeIndex].sampleIndex1;
-
-		a3hierarchyPoseLerp(activeHS_fk->animPose,
+		sampleIndex0 = scene->clipPool->keyframe[clipCtrl_fk->keyframeIndex].sampleIndex0;
+		sampleIndex1 = scene->clipPool->keyframe[clipCtrl_fk->keyframeIndex].sampleIndex1;
+		a3hierarchyPoseLerp(activeHS_tree->animPose,
 			poseGroup->hpose + sampleIndex0, poseGroup->hpose + sampleIndex1,
-			(a3real)clipCtrl->keyframeParam, activeHS_fk->hierarchy->numNodes);
-		a3kinematicsUpdateHierarchyStateFK(activeHS_fk, baseHS, poseGroup);
+			(a3real)clipCtrl_fk->keyframeParam, activeHS_tree->hierarchy->numNodes);
 	}
+
+	// do blending here
+	//	-> interpolate idle_f/idle_m -> idle_fm
+	//	-> interpolate idle_fm/idle_p -> result
+	a3hierarchyPoseLerp(scene->hierarchyState_skel_blend_idle_fm_blend->animPose,	// dst: idle_fm
+		scene->hierarchyState_skel_blend_idle_f->animPose,							// src(0): idle_f
+		scene->hierarchyState_skel_blend_idle_m->animPose,							// src(1): idle_m
+		a3real_half, activeHS->hierarchy->numNodes);
+	a3hierarchyPoseLerp(scene->hierarchyState_skel_blend_result->animPose,			// dst: blend tree result
+		scene->hierarchyState_skel_blend_idle_fm_blend->animPose,					// src(0): idle_fm
+		scene->hierarchyState_skel_blend_idle_p->animPose,							// src(1): idle_p
+		a3real_half, activeHS->hierarchy->numNodes);
+
+	// resolve final FK state:
+	// copy result to fk and run FK pipeline
+	a3hierarchyPoseCopy(activeHS_fk->animPose,				// dst: FK anim
+		scene->hierarchyState_skel_blend_result->animPose,	// src: blend tree result
+		activeHS_fk->hierarchy->numNodes);
+	a3kinematicsUpdateHierarchyStateFK(activeHS_fk, baseHS, poseGroup);
 
 	// resolve final IK state
 	// copy FK result to IK to begin IK pipeline
 	// all joints not affected by IK will match FK state
 	a3hierarchyPoseCopy(activeHS_ik->animPose,	// dst: IK anim
 		activeHS_fk->animPose,					// src: FK anim
-	//	baseHS->animPose,						// src test: base anim (identity)
+		//	baseHS->animPose,						// src test: base anim (identity)
 		activeHS_ik->hierarchy->numNodes);
 	a3kinematicsUpdateHierarchyStateFK(activeHS_ik, baseHS, poseGroup);
 
@@ -262,17 +268,14 @@ void a3animation_update_animation_skeletal(
 	a3hierarchyPoseLerp(activeHS->animPose,	// dst: final anim
 		activeHS_fk->animPose,				// src(0): FK anim
 		activeHS_ik->animPose,				// src(1): IK anim
-	//	baseHS->animPose,									// src test(1): base anim (identity)
+		//	baseHS->animPose,									// src test(1): base anim (identity)
+		//	scene->hierarchyState_skel_blend_result->animPose,	// src test(1): blend target
 		blend_fk_ik, activeHS->hierarchy->numNodes);
 
 	// finally, rerun FK pipeline (skinning optional)
 	a3kinematicsUpdateHierarchyStateFK(activeHS, baseHS, poseGroup);
 	a3kinematicsUpdateHierarchyStateSkin(activeHS, baseHS);
 }
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
 
 
 void a3animation_update_animation_other(
@@ -381,34 +384,135 @@ void a3animation_update(a3_DemoState* demoState, a3_Scene_Animation* scene, a3f6
 			a3mat4_identity.m);
 	}
 	
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: ADD SKELETAL GRAPHICS UPDATE
-//-----------------------------------------------------------------------------
-
 	// prepare and graphics data
 	{
 		a3ui32 const skeletonIndex = (a3ui32)(scene->obj_skeleton - scene->object_scene);
 		a3ui32 const max_mats = sizeof(scene->display_main.mvp_joint) / sizeof(a3mat4);
 		a3mat4 const mvp_obj = scene->matrixStack[skeletonIndex].modelViewProjectionMat;
+		a3ui32 const n_nodes = sizeof(scene->hierarchyState_skel_blend) / sizeof(*scene->hierarchyState_skel_blend);
 
 		a3demo_updateHierarchyGraphics(
 			scene->display_main.mvp_joint, scene->display_main.mvp_bone, scene->display_main.t_skin, scene->display_main.dq_skin,
 			max_mats, mvp_obj, scene->hierarchyState_skel_final);
+
+		// optionally update intermediate states FK for rendering
+		if (demoState->displayHiddenVolumes && updateBlendTreeFK)
+		{
+			a3mat4 mvp_sub, local_sub = a3mat4_identity;
+
+			// idle_p, idle_f, idle_m, idle_fm, result
+			a3real3 const offset_debug[] = { { +5, +10, 0 }, { 0, +15, 0 }, { -10, +15, 0 }, { -5, +10, 0 }, { 0, +5, 0 } };
+			a3_HierarchyState const* baseHS = scene->hierarchyState_skel_base;
+			a3_HierarchyPoseGroup const* poseGroup = scene->hierarchyPoseGroup_skel;
+
+			for (i = 0; i < n_nodes; ++i)
+			{
+				a3_HierarchyState* activeHS_tree = &scene->hierarchyState_skel_blend[i];
+
+				a3kinematicsUpdateHierarchyStateFK(activeHS_tree, baseHS, poseGroup);
+				a3kinematicsUpdateHierarchyStateSkin(activeHS_tree, baseHS);
+
+				a3real3SetReal3(local_sub.v3.v, offset_debug[i]);
+				a3real4x4Product(mvp_sub.m, mvp_obj.m, local_sub.m);
+				if (activeHS_tree->hierarchy && activeHS_tree->hierarchy->nodes)
+				{
+					a3demo_updateHierarchyGraphics(
+						scene->display_tree[i].mvp_joint, scene->display_tree[i].mvp_bone, scene->display_tree[i].t_skin, scene->display_tree[i].dq_skin,
+						max_mats, mvp_sub, activeHS_tree);
+				}
+			}
+		}
 	}
 
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+	// testing: reset IK effectors to lock them to FK result
+	{
+		//void a3animation_load_resetEffectors(a3_Scene_Animation * scene,
+		//	a3_HierarchyState * hierarchyState, a3_HierarchyPoseGroup const* poseGroup);
+		//a3animation_load_resetEffectors(scene,
+		//	scene->hierarchyState_skel_final, scene->hierarchyPoseGroup_skel);
+	}
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: CONTROL
-//-----------------------------------------------------------------------------
-	
+	// process input
+/*	switch (scene->ctrl_target)
+	{
+	case animation_ctrl_camera:
+		// do nothing
+		break;
+	case animation_ctrl_character:
+		// apply integration method
+		switch (scene->ctrl_position)
+		{
+		case animation_input_direct:
+			scene->vel = scene->acc = a3vec2_zero;
+			a3real2Set(scene->pos.v,
+				a3real_four * (a3real)scene->axis_l[0],
+				a3real_four * (a3real)scene->axis_l[1]);
+			break;
+		case animation_input_euler:
+			scene->acc = a3vec2_zero;
+			a3real2Set(scene->vel.v,
+				a3real_four * (a3real)scene->axis_l[0],
+				a3real_four * (a3real)scene->axis_l[1]);
+			a3demo_integrateEuler2(scene->pos.v, scene->pos.v, scene->vel.v, dtr);
+			break;
+		case animation_input_kinematic:
+			a3real2Set(scene->acc.v,
+				a3real_four * (a3real)scene->axis_l[0],
+				a3real_four * (a3real)scene->axis_l[1]);
+			a3demo_integrateKinematic2(scene->pos.v, scene->pos.v, scene->vel.v, scene->acc.v, dtr);
+			a3demo_integrateEuler2(scene->vel.v, scene->vel.v, scene->acc.v, dtr);
+			break;
+		case animation_input_interpolate1:
+			scene->acc = a3vec2_zero;
+			a3real2Set(scene->vel.v,
+				a3real_four * (a3real)scene->axis_l[0],
+				a3real_four* (a3real)scene->axis_l[1]);
+			a3real2Lerp(scene->pos.v, scene->pos.v, scene->vel.v, a3real_half);
+			break;
+		case animation_input_interpolate2:
+			a3real2Set(scene->acc.v,
+				a3real_four * (a3real)scene->axis_l[0],
+				a3real_four * (a3real)scene->axis_l[1]);
+			a3real2Lerp(scene->vel.v, scene->vel.v, scene->acc.v, a3real_half);
+			a3demo_integrateEuler2(scene->pos.v, scene->pos.v, scene->vel.v, dtr);
+			break;
+		}
+		// process rotation
+		switch (scene->ctrl_rotation)
+		{
+		case animation_input_direct:
+			scene->velr = scene->accr = a3real_zero;
+			scene->rot = a3real_oneeighty * (a3real)scene->axis_r[0];
+			break;
+		case animation_input_euler:
+			scene->accr = a3real_zero;
+			scene->velr = a3real_oneeighty * (a3real)scene->axis_r[0];
+			scene->rot = a3demo_integrateEuler(scene->rot, scene->velr, dtr);
+			break;
+		case animation_input_kinematic:
+			scene->accr = a3real_oneeighty * (a3real)scene->axis_r[0];
+			scene->rot = a3demo_integrateKinematic(scene->rot, scene->velr, scene->accr, dtr);
+			scene->velr = a3demo_integrateEuler(scene->velr, scene->accr, dtr);
+			break;
+		case animation_input_interpolate1:
+			scene->accr = a3real_zero;
+			scene->velr = a3real_oneeighty * (a3real)scene->axis_r[0];
+			scene->rot = a3lerpFunc(scene->rot, scene->velr, a3real_half);
+			break;
+		case animation_input_interpolate2:
+			scene->accr = a3real_oneeighty * (a3real)scene->axis_r[0];
+			scene->velr = a3lerpFunc(scene->velr, scene->accr, a3real_half);
+			scene->rot = a3demo_integrateEuler(scene->rot, scene->velr, dtr);
+			break;
+		}
+		break;
+	}
 
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+	// apply input
+	scene->obj_skeleton_ctrl->position.x = +(scene->pos.x);
+	scene->obj_skeleton_ctrl->position.y = +(scene->pos.y);
+	scene->obj_skeleton_ctrl->euler.z = -a3trigValid_sind(scene->rot);
+*/
 }
 
 

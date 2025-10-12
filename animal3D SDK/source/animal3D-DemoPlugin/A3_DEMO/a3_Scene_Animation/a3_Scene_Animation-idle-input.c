@@ -65,15 +65,11 @@ void a3animation_input_keyCharPress(a3_DemoState const* demoState, a3_Scene_Anim
 		// toggle control target
 		a3sceneCtrlCasesLoop(scene->ctrl_target, animation_ctrlmode_max, '\'', ';');
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: CONTROL MODES
-//-----------------------------------------------------------------------------
-
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+		// toggle position input mode
+		a3sceneCtrlCasesLoop(scene->ctrl_position, animation_inputmode_max, '=', '-');
+		
+		// toggle rotation input mode
+		a3sceneCtrlCasesLoop(scene->ctrl_rotation, animation_inputmode_max, '+', '_');
 	}
 }
 
@@ -152,17 +148,34 @@ void a3animation_input(a3_DemoState* demoState, a3_Scene_Animation* scene, a3f64
 		sceneObject = scene->obj_skeleton_ctrl + scene->ctrl_target - animation_ctrl_character;
 		a3demo_input_controlObject(demoState, sceneObject, dt, a3real_one, a3real_zero);
 		break;
-
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: ADD CONTROL
-//-----------------------------------------------------------------------------
-		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
 	}
+
+	// capture axes
+/*	if (a3XboxControlIsConnected(demoState->xcontrol))
+	{
+		// get directly from joysticks
+		a3XboxControlGetJoysticks(demoState->xcontrol, scene->axis_l, scene->axis_r);
+	}
+	else
+	{
+		// calculate normalized vectors given keyboard state
+		a3f64 lenInv;
+		scene->axis_l[0] = (a3f64)a3keyboardGetDifference(demoState->keyboard, a3key_D, a3key_A);
+		scene->axis_l[1] = (a3f64)a3keyboardGetDifference(demoState->keyboard, a3key_W, a3key_S);
+		scene->axis_r[0] = (a3f64)a3keyboardGetDifference(demoState->keyboard, a3key_L, a3key_J);
+		scene->axis_r[1] = (a3f64)a3keyboardGetDifference(demoState->keyboard, a3key_I, a3key_K);
+
+		lenInv = scene->axis_l[0] * scene->axis_l[0] + scene->axis_l[1] * scene->axis_l[1];
+		lenInv = __a3isNotNearZeroF64(lenInv) ? a3sqrtdInverse(lenInv) : __a3f64zero;
+		scene->axis_l[0] *= lenInv;
+		scene->axis_l[1] *= lenInv;
+
+		lenInv = scene->axis_r[0] * scene->axis_r[0] + scene->axis_r[1] * scene->axis_r[1];
+		lenInv = __a3isNotNearZeroF64(lenInv) ? a3sqrtdInverse(lenInv) : __a3f64zero;
+		scene->axis_r[0] *= lenInv;
+		scene->axis_r[1] *= lenInv;
+	}
+*/
 
 	// allow the controller, if connected, to change control targets
 	if (a3XboxControlIsConnected(demoState->xcontrol))
@@ -172,15 +185,15 @@ void a3animation_input(a3_DemoState* demoState, a3_Scene_Animation* scene, a3f64
 		if (a3XboxControlIsPressed(demoState->xcontrol, a3xbox_DPAD_left))
 			a3sceneCtrlDecLoop(scene->ctrl_target, animation_ctrlmode_max);
 		
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: CONTROL MODES
-//-----------------------------------------------------------------------------
+		if (a3XboxControlIsPressed(demoState->xcontrol, a3xbox_B))
+			a3sceneCtrlIncLoop(scene->ctrl_position, animation_inputmode_max);
+		if (a3XboxControlIsPressed(demoState->xcontrol, a3xbox_X))
+			a3sceneCtrlDecLoop(scene->ctrl_position, animation_inputmode_max);
 		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+		if (a3XboxControlIsPressed(demoState->xcontrol, a3xbox_Y))
+			a3sceneCtrlIncLoop(scene->ctrl_rotation, animation_inputmode_max);
+		if (a3XboxControlIsPressed(demoState->xcontrol, a3xbox_A))
+			a3sceneCtrlDecLoop(scene->ctrl_rotation, animation_inputmode_max);
 	}
 }
 

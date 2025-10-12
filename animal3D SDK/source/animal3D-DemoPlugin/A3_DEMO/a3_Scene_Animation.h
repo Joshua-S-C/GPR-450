@@ -130,15 +130,17 @@ extern "C"
 		animation_ctrlmode_max
 	} a3_Scene_Animation_ControlTarget;
 	
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: ADD MODES
-//-----------------------------------------------------------------------------
+	// input modes
+	typedef enum a3_Scene_Animation_InputMode
+	{
+		animation_input_direct,
+		animation_input_euler,
+		animation_input_kinematic,
+		animation_input_interpolate1,
+		animation_input_interpolate2,
 	
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+		animation_inputmode_max
+	} a3_Scene_Animation_InputMode;
 
 	// display data for hierarchy drawing
 	typedef struct a3_HierarchyDisplayData
@@ -198,16 +200,33 @@ extern "C"
 		a3_Hierarchy hierarchy_skel[1];
 		a3_HierarchyPoseGroup hierarchyPoseGroup_skel[1];
 		a3_HierarchyDisplayData display_main;
-
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: ADD BLENDING
-//-----------------------------------------------------------------------------
 		
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+		// blend tree
+		a3_Hierarchy blendTree[1];
+		union {
+			a3_HierarchyState hierarchyState_skel_blend[5];
+			struct {
+				a3_HierarchyState
+					//blend control nodes
+					hierarchyState_skel_blend_idle_p[1],
+					hierarchyState_skel_blend_idle_m[1],
+					hierarchyState_skel_blend_idle_f[1],
+					//blend result nodes
+					hierarchyState_skel_blend_idle_fm_blend[1],
+					hierarchyState_skel_blend_result[1];
+			};
+		};
+		a3_HierarchyDisplayData display_tree[5];
+		
+		// blend operations
+		a3_BlendOpSet blendOpID[1], blendOpRET[1], blendOpCOPY[1], blendOpINV[1],
+			blendOpCONCAT[1], blendOpDECONCAT[1], blendOpSCALE[1],
+			blendOpNEAR[1], blendOpLERP[1];
+		// input axes & integration variables
+		a3f64 axis_l[2], axis_r[2];
+		a3vec2 pos, vel, acc;
+		a3real rot, velr, accr;
+		a3_Scene_Animation_InputMode ctrl_position, ctrl_rotation;
 
 		// control modes
 		a3_Scene_Animation_ControlTarget ctrl_target;

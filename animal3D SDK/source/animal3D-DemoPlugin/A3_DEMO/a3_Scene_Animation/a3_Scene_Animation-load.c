@@ -35,15 +35,22 @@
 
 //-----------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: ADD BLENDING
-//-----------------------------------------------------------------------------
+// configure blend operations, which is a bunch of pointers
+void a3animation_setBlendOps(a3_DemoState const* demoState, a3_Scene_Animation* scene)
+{
+	a3blendOpSetInit(scene->blendOpID, 0, 0, a3blendOpID4X4, a3blendOpID4X2, a3blendOpZERO4, a3blendOpONE4, a3blendOpID4, a3blendOpZERO4);
+	a3blendOpSetInit(scene->blendOpRET, 0, 0, a3blendOpRET4X4, a3blendOpRET4X2, a3blendOpRET4, a3blendOpRET4, a3blendOpRET4, a3blendOpRET4);
+	a3blendOpSetInit(scene->blendOpCOPY, 1, 0, a3blendOpCOPY4X4, a3blendOpCOPY4X2, a3blendOpCOPY4, a3blendOpCOPY4, a3blendOpCOPY4, a3blendOpCOPY4);
+	a3blendOpSetInit(scene->blendOpINV, 1, 0, a3blendOpINVR4X4, a3blendOpCONJDQ4X2, a3blendOpNEGATE4, a3blendOpRECIP4, a3blendOpNEGATE4, a3blendOpNEGATE4);
 
+	a3blendOpSetInit(scene->blendOpCONCAT, 2, 0, a3blendOpMULM4X4, a3blendOpMULDQ4X2, a3blendOpADD4, a3blendOpMUL4, a3blendOpADD4, a3blendOpADD4);
+	a3blendOpSetInit(scene->blendOpDECONCAT, 2, 0, a3blendOpMULINVR4X4, a3blendOpMULCONJDQ4X2, a3blendOpSUB4, a3blendOpDIV4, a3blendOpSUB4, a3blendOpSUB4);
+	a3blendOpSetInit(scene->blendOpSCALE, 1, 1, a3blendOpSCALE4X4, a3blendOpSCALE4X2, a3blendOpSCALE4, a3blendOpPOW4, a3blendOpSCALE4, a3blendOpSCALE4);
 
+	a3blendOpSetInit(scene->blendOpNEAR, 2, 1, a3blendOpNEAR4X4, a3blendOpNEAR4X2, a3blendOpNEAR4, a3blendOpNEAR4, a3blendOpNEAR4, a3blendOpNEAR4);
+	a3blendOpSetInit(scene->blendOpLERP, 2, 1, a3blendOpLERP4X4, a3blendOpSCLERP4X2, a3blendOpLERP4, a3blendOpLERP4, a3blendOpLERP4, a3blendOpLERP4);
+}
 
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
 
 void a3animation_load_resetEffectors(a3_Scene_Animation* scene,
 	a3_HierarchyState* hierarchyState, a3_HierarchyPoseGroup const* poseGroup)
@@ -176,7 +183,7 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 
 
 	a3_FileStream fileStream[1] = { 0 };
-	const a3byte* const animationStream = "./data/gpro25_base_anim_active_3.dat";
+	const a3byte* const animationStream = "./data/gpro25_base_anim_active_4.dat";
 	const a3boolean force_disable_streaming = false;
 
 	
@@ -692,15 +699,21 @@ void a3animation_init_animation(a3_DemoState const* demoState, a3_Scene_Animatio
 	hierarchyState->hierarchy = 0;
 	a3hierarchyStateCreate(hierarchyState, hierarchy);
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: BLENDING
-//-----------------------------------------------------------------------------
+	// blend tree hierarchy
+	a3hierarchyCreate(scene->blendTree, 5, 0);
+	a3hierarchySetNode(scene->blendTree, 0, -1, "blendTree_result");
+	a3hierarchySetNode(scene->blendTree, 1, 0, "blendTree_idle_fm_blend");
+	a3hierarchySetNode(scene->blendTree, 2, 1, "blendTree_idle_f");
+	a3hierarchySetNode(scene->blendTree, 3, 1, "blendTree_idle_m");
+	a3hierarchySetNode(scene->blendTree, 4, 0, "blendTree_idle_p");
 	
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+	// blend tree states
+	for (p = 0, j = scene->blendTree->numNodes; p < j; ++p)
+	{
+		hierarchyState = scene->hierarchyState_skel_blend + p;
+		hierarchyState->hierarchy = 0;
+		a3hierarchyStateCreate(hierarchyState, hierarchy);
+	}
 	
 	// control node
 	scene->obj_skeleton_ctrl->euler.z = a3real_oneeighty;
@@ -769,16 +782,9 @@ void a3animation_loadValidate(a3_DemoState* demoState, a3_Scene_Animation* scene
 		a3clipControllerRefresh(&scene->clipCtrl[i], scene->clipPool);
 	for (i = 0, j = n_hierarchy; i < j; ++i)
 		scene->hierarchyState_skel[i].hierarchy = scene->hierarchy_skel;
-	
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: INIT BLEND
-//-----------------------------------------------------------------------------
-	
 
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+	// blend ops
+	a3animation_setBlendOps(demoState, scene);
 }
 
 

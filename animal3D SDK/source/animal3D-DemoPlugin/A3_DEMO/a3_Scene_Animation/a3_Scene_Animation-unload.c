@@ -37,18 +37,14 @@
 
 void a3animation_unload(a3_DemoState const* demoState, a3_Scene_Animation* scene)
 {
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: UNLOAD BLEND
-//-----------------------------------------------------------------------------
-	
+	a3ui32 i, j;
 
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+	// blend tree
+	for (i = 0, j = scene->blendTree->numNodes; i < j; ++i)
+		a3hierarchyStateRelease(scene->hierarchyState_skel_blend + i);
+	a3hierarchyRelease(scene->blendTree);
 
 	// release skeleton and related assets
-	a3ui32 i, j;
 	a3ui32 const n_hierarchy = sizeof(scene->hierarchyState_skel) / sizeof(a3_HierarchyState);
 	for (i = 0, j = n_hierarchy; i < j; ++i)
 		a3hierarchyStateRelease(scene->hierarchyState_skel + i);

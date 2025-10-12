@@ -116,15 +116,15 @@ void a3animation_render_controls(a3_DemoState const* demoState, a3_Scene_Animati
 		"CHARACTER ANKLE CONSTRAINT (L)",
 	};
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: ADD LABELS
-//-----------------------------------------------------------------------------
-	
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+	a3byte const* inputModeName[animation_inputmode_max] = {
+		"Direct assignment",
+		"Euler integration",
+		"Kinematic integration",
+		"Interpolate to target value (fake velocity)",
+		"Interpolate to target velocity (fake acceleration)",
+	};
+	a3_Scene_Animation_InputMode const inputPos = scene->ctrl_position;
+	a3_Scene_Animation_InputMode const inputRot = scene->ctrl_rotation;
 
 	// pipeline and target
 	a3_Scene_Animation_RenderProgramName const render = scene->render;
@@ -343,16 +343,7 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 	
 	a3ui32 const max_mats = sizeof(scene->display_main.mvp_joint) / sizeof(*scene->display_main.mvp_joint);
 	a3ui32 const n_joints = scene->hierarchyState_skel->hierarchy->numNodes;
-	
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: ADD INFO
-//-----------------------------------------------------------------------------
-	
-
-
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+	a3ui32 const n_nodes = sizeof(scene->hierarchyState_skel_blend) / sizeof(*scene->hierarchyState_skel_blend);
 
 
 	//-------------------------------------------------------------------------
@@ -458,16 +449,40 @@ void a3animation_render(a3_DemoState const* demoState, a3_Scene_Animation const*
 			a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, sky);
 			a3vertexDrawableActivateAndRender(demoState->draw_character_skin_alt);
 
+			// draw blend nodes
+			if (demoState->displayHiddenVolumes)
+			{
+				// copy model matrix, select offsets and colors
+				a3mat4 const modelMat_copy = modelMat;
 
-//-----------------------------------------------------------------------------
-//****TO-DO-ANIM-PREP-4: ADD BLEND TARGETS
-//-----------------------------------------------------------------------------
+				// idle_p, idle_f, idle_m, idle_fm, result
+				a3real3 const offset_debug[] = { { +5, +10, 0 }, { 0, +15, 0 }, { -10, +15, 0 }, { -5, +10, 0 }, { 0, +5, 0 } };
+				a3real const* color_debug[] = { blue, purple, rose, magenta, red };
 
+				for (j = 0; j < n_nodes; ++j)
+				{
+					modelMat = modelMat_copy;
+					a3real3Add(modelMat.v3.v, offset_debug[j]);
 
+					a3real4x4Product(modelViewMat.m, viewMat.m, modelMat.m);
+					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV, 1, modelViewMat.mm);
+					a3scene_quickInvertTranspose_internal(modelViewMat.m);
+					modelViewMat.v3 = a3vec4_zero;
 
-//-----------------------------------------------------------------------------
-//****END-TO-DO-PREP-4
-//-----------------------------------------------------------------------------
+					a3demo_uploadHierarchyGraphics(demoState->ubo_transformMVP, demoState->ubo_transformMVPB, demoState->ubo_transformBlend,
+						scene->display_tree[j].mvp_joint, scene->display_tree[j].mvp_bone, scene->display_tree[j].t_skin, scene->display_tree[j].dq_skin,
+						max_mats, n_joints);
+					a3shaderUniformSendFloatMat(a3unif_mat4, 0, currentDemoProgram->uMV_nrm, 1, modelViewMat.mm);
+					a3shaderUniformSendFloat(a3unif_vec4, currentDemoProgram->uColor, 1, color_debug[j]);
+					a3vertexDrawableActivateAndRender(demoState->draw_character_skin);
+					a3vertexDrawableActivateAndRender(demoState->draw_character_skin_alt);
+				}
+
+				// re-upload main
+				a3demo_uploadHierarchyGraphics(demoState->ubo_transformMVP, demoState->ubo_transformMVPB, demoState->ubo_transformBlend,
+					scene->display_main.mvp_joint, scene->display_main.mvp_bone, scene->display_main.t_skin, scene->display_main.dq_skin,
+					max_mats, n_joints);
+			}
 		}
 
 		// draw morphing object
