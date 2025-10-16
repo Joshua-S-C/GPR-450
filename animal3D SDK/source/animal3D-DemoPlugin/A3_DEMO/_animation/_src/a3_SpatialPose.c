@@ -138,9 +138,9 @@ a3i32 a3spatialPoseRestore(a3_SpatialPose* spatialPose, const a3_SpatialPoseChan
 
 		// multiply columns by respective scale
 		a3mat3 R;
-		a3realQuotientS(R.v0.v, spatialPose->transformMat.v0.v, spatialPose->scale.x);
-		a3realQuotientS(R.v1.v, spatialPose->transformMat.v1.v, spatialPose->scale.y);
-		a3realQuotientS(R.v2.v, spatialPose->transformMat.v2.v, spatialPose->scale.z);
+		a3real2QuotientS(R.v0.v, spatialPose->transformMat.v0.v, spatialPose->scale.x);
+		a3real2QuotientS(R.v1.v, spatialPose->transformMat.v1.v, spatialPose->scale.y);
+		a3real2QuotientS(R.v2.v, spatialPose->transformMat.v2.v, spatialPose->scale.z);
 
 		// extract angles
 		// Standard c mtrig functions
@@ -240,7 +240,9 @@ a3i32 a3spatialPoseDeconcat(a3_SpatialPose* spatialPose_out, const a3_SpatialPos
 }
 
 // lerp
-extern float powf(float b, float e);//#include <math.h>
+//#include <math.h>
+//extern float powf(float b, float e);
+
 a3i32 a3spatialPoseLerp(a3_SpatialPose* spatialPose_out, const a3_SpatialPose* spatialPose_0, const a3_SpatialPose* spatialPose_1, const a3real u)
 {
 	if (spatialPose_out && spatialPose_0 && spatialPose_1)
