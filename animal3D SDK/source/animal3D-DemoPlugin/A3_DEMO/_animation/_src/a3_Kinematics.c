@@ -455,9 +455,22 @@ void a3kinematicsUpdateLimbIK
 	// a3KinematicsResolvePostIK
 	// a3KinematicsResolvePostIK
 
+	//Extracting x, y, and z for future use
+	a3real3 basePos, hingePos, endPos, targetPos, polePos;
+	a3real3Set(basePos, basePosVec4.x, basePosVec4.y, basePosVec4.z);
+	a3real3Set(hingePos, hingePosVec4.x, hingePosVec4.y, hingePosVec4.z);
+	a3real3Set(endPos, endPosVec4.x, endPosVec4.y, endPosVec4.z);
+	a3real3Set(targetPos, targetPosVec4.x, targetPosVec4.y, targetPosVec4.z);
+	a3real3Set(polePos, polePosVec4.x, polePosVec4.y, polePosVec4.z);
+
+	//Get Segment Lengths
+	a3real3 baseToHinge, hingeToEnd, baseToTarget;
+	a3real3Diff(baseToHinge, hingePos, basePos);
+	a3real3Diff(hingeToEnd, endPos, hingePos);
+	a3real3Diff(baseToTarget, targetPos, basePos);
 
 
-	// Constrained Displacement
+	/*// Constrained Displacement
 	// Distance of bottom of right triangle
 	a3real4x4 constrainDisplacement;
 	a3real3Diff(*constrainDisplacement, endPosVec4.v, basePosVec4.v);
@@ -483,7 +496,7 @@ void a3kinematicsUpdateLimbIK
 	a3real cosineTheta =
 		(Line1 * Line1 + Line2 * Line2 + Line3 * Line3) / (2 * Line1 * Line2);
 
-	a3real theta = a3cosd(cosineTheta);
+	a3real theta = a3cosd(cosineTheta);*/
 
 
 	/*a3kinematicsUpdateLookAtIK
