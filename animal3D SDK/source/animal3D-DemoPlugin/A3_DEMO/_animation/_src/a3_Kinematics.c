@@ -425,11 +425,17 @@ void a3kinematicsUpdateLimbIK
 		// -> wrist effector
 		// -> pole vector constraint	
 
-	a3vec4 endPos, hingePos, basePos;
+	a3vec4 endPosVec4, hingePosVec4, basePosVec4, targetPosVec4, polePosVec4;
 
-	endPos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_end].transformMat.v3;
-	hingePos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_hinge].transformMat.v3;
-	basePos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_base].transformMat.v3;
+	endPosVec4 = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_end].transformMat.v3;
+	hingePosVec4 = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_hinge].transformMat.v3;
+	basePosVec4 = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_base].transformMat.v3;
+
+
+	targetPosVec4 = sceneGraphState->objectSpace->hpose_base[sceneGraphIndex_constraint].transformMat.v3;
+	polePosVec4 = sceneGraphState->objectSpace->hpose_base[sceneGraphIndex_effector_end].transformMat.v3;
+
+
 
 	// Main Step
 	// solve joint-to-object for end, hinge, base
@@ -450,14 +456,15 @@ void a3kinematicsUpdateLimbIK
 	// a3KinematicsResolvePostIK
 
 
+
 	// Constrained Displacement
 	// Distance of bottom of right triangle
 	a3real4x4 constrainDisplacement;
-	a3real3Diff(*constrainDisplacement, endPos.v, basePos.v);
+	a3real3Diff(*constrainDisplacement, endPosVec4.v, basePosVec4.v);
 
 	// Effector Displacement
 	a3real4x4 effectorDisplacement;
-	a3real3Diff(*effectorDisplacement, basePos.v, hingePos.v);
+	a3real3Diff(*effectorDisplacement, basePosVec4.v, hingePosVec4.v);
 
 	// Normal Displacement
 	a3real4x4 planeNormal;
@@ -467,10 +474,61 @@ void a3kinematicsUpdateLimbIK
 	a3real3 height;
 	a3real3Cross(height, *planeNormal, *effectorDisplacement);
 
-//-----------------------------------------------------------------------------
+
+	//Math by @ZuchiniByDay (Seriously, thank you)
+	a3real Line1 = a3real2Length(*effectorDisplacement);
+	a3real Line2 = a3real2Length(*constrainDisplacement);
+	a3real Line3 = a3real2Length(height);
+
+	a3real cosineTheta =
+		(Line1 * Line1 + Line2 * Line2 + Line3 * Line3) / (2 * Line1 * Line2);
+
+	a3real theta = a3cosd(cosineTheta);
+
+
+	/*a3kinematicsUpdateLookAtIK
+	(
+		sceneGraphState,
+		activeHS,
+		baseHS,
+		poseGroup,
+		sceneGraphIndex_hierarchyObj,
+		sceneGraphIndex_effector_end,
+		&m_affected_base.m,
+		basis_hierarchyObj,
+		basis_affected_base
+	);
+
+	a3kinematicsUpdateLookAtIK
+	(
+		sceneGraphState,
+		activeHS,
+		baseHS,
+		poseGroup,
+		sceneGraphIndex_hierarchyObj,
+		sceneGraphIndex_effector_end,
+		&m_affected_hinge.m,
+		basis_hierarchyObj,
+		basis_affected_hinge
+	);
+
+	a3kinematicsUpdateLookAtIK
+	(
+		sceneGraphState,
+		activeHS,
+		baseHS,
+		poseGroup,
+		sceneGraphIndex_hierarchyObj,
+		sceneGraphIndex_effector_end,
+		&m_affected_end.m,
+		basis_hierarchyObj,
+		basis_affected_end
+	);*/
+
+//----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
 //-----------------------------------------------------------------------------
 }
-
+																					
 
 //-----------------------------------------------------------------------------
