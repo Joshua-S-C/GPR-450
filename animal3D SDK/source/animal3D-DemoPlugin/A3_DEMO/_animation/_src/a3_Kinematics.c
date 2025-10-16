@@ -367,20 +367,42 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 
 	// Last Step
 	//	Resolve every affected jointP: a3KinematicsResolvePostIK
-//	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, sightPosition.m);
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, sightPosition.m);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
 //-----------------------------------------------------------------------------
 }
 
-void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
-	a3_HierarchyState* activeHS, a3_HierarchyState const* baseHS, a3_HierarchyPoseGroup const* poseGroup,
-	a3ui32 const sceneGraphIndex_hierarchyObj, a3ui32 const sceneGraphIndex_effector_end, a3ui32 const sceneGraphIndex_constraint,
-	a3ui32 const hierarchyObjIndex_affected_end, a3ui32 const hierarchyObjIndex_affected_hinge, a3ui32 const hierarchyObjIndex_affected_base,
-	a3_Basis const basis_hierarchyObj, a3_Basis const basis_affected_end, a3_Basis const basis_affected_hinge, a3_Basis const basis_affected_base)
+void a3kinematicsUpdateLimbIK
+(
+	//Hierarchy State
+	a3_HierarchyState const* sceneGraphState,
+	a3_HierarchyState* activeHS,
+	a3_HierarchyState const* baseHS, 
+	a3_HierarchyPoseGroup const* poseGroup,
+
+	//Scene thingies (move things around)
+	a3ui32 const sceneGraphIndex_hierarchyObj, 
+	a3ui32 const sceneGraphIndex_effector_end,
+	a3ui32 const sceneGraphIndex_constraint,
+
+	//joint positions (things we modify)
+	a3ui32 const hierarchyObjIndex_affected_end,
+	a3ui32 const hierarchyObjIndex_affected_hinge,
+	a3ui32 const hierarchyObjIndex_affected_base,
+
+	//joint basis positions (how we get things)
+	a3_Basis const basis_hierarchyObj, 
+	a3_Basis const basis_affected_end, 
+	a3_Basis const basis_affected_hinge, 
+	a3_Basis const basis_affected_base
+)
+
 {
 	a3mat3 m_hierarchyObj, m_affected_end, m_affected_hinge, m_affected_base;
+
+	//! Failstates
 	if (!a3basisToMat3(m_hierarchyObj.m, basis_hierarchyObj))
 		return;
 	if (!a3basisToMat3(m_affected_end.m, basis_affected_end))
@@ -399,9 +421,15 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 	// First Step
-	// Trnsform everything into the space of the skeleton
+	// Transform everything into the space of the skeleton
 	// -> wrist effector
 	// -> pole vector constraint
+
+	a3vec4 endPos, hingePos, basePos;
+
+	endPos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_end].transformMat.v3;
+	hingePos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_hinge].transformMat.v3;
+	basePos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_base].transformMat.v3;
 
 	// Main Step
 	// solve joint-to-object for end, hinge, base
@@ -412,7 +440,7 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 	//	3. plane normal = step 1 (base to pole) Xcross step 2 (base to end)
 	//	4. geometric (Heron's formular) or algebrais (law of cosines)
 	//	-> solves elbow position
-	//	5. "look at" solves the shoulder an delbow rotations
+	//	5. "look at" solves the shoulder and elbow rotations
 
 	// Last Step
 	// Resolve every affected jointP: a3KinematicsResolvePostIK
@@ -420,6 +448,8 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 	// a3KinematicsResolvePostIK
 	// a3KinematicsResolvePostIK
 	// a3KinematicsResolvePostIK
+
+	
 
 
 //-----------------------------------------------------------------------------
