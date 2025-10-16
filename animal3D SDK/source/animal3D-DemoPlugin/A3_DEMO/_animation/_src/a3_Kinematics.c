@@ -509,6 +509,25 @@ void a3kinematicsUpdateLimbIK
 	a3real3Cross(bendDirection, polePlaneNormalized, directionBaseToTarget);
 	a3real3GetUnit(polePlaneNormalized, polePlaneNormalized);
 
+	//Law of Cosines (Pythagorean Theorem)
+	a3real a, b, c;
+	a = lengthUpperLimb;
+	b = lengthLowerLimb;
+	c = distanceToTarget;
+
+	a3real cosA = (a * a + c * c - b * b) / (2.0f * a * c);
+	cosA = a3clamp(cosA, -1.0f, 1.0f);
+	const a3real sinA = a3sqrt(a3maximum(0.0f, 1.0f - cosA * cosA));
+
+	a3real3 newHinge;
+	a3real3 tan1, tan2;
+
+	a3real3ProductS(tan1, directionBaseToTarget, a * cosA);
+	a3real3ProductS(tan2, bendDirection, a * sinA);
+	a3real3Sum(newHinge, basePos, tan1);
+	a3real3Sum(newHinge, newHinge, tan2);
+
+
 	/*// Constrained Displacement
 	// Distance of bottom of right triangle
 	a3real4x4 constrainDisplacement;
