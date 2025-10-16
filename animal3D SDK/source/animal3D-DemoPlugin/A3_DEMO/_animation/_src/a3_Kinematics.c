@@ -306,26 +306,53 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// Last Step
 	//	Resolve every affected jointP: a3KinematicsResolvePostIK
 
-	
-	//a3vec3 target = m_hierarchyObj.v2;
-	//a3vec3 jointPos = m_affected.v2;
-
+	// First Step
 	a3vec4 target, jointPos;
-
 	target = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].transformMat.v3;
 	jointPos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
+
 	
-	//a3real3r directionBasisTest = a3real3Sub(target.v, jointPos.v);
-	//a3real3r* directionBasisReal = &directionBasisTest;
+	// Testing manually subtracting
+	float targetX = target.x;
+	float targetY = target.y;
+	float targetZ = target.z;
 
-	//a3vec4 upVector = { 0,1,0,0 };
-	//a3real3r* upVecReal = upVector.v;
+	float jointPosX = jointPos.x;
+	float jointPosY = jointPos.y;
+	float jointPosZ = jointPos.z;
 
-	////*a3real3r
-	//a3real3r* sideBasis = ;
-	//a3real3Cross(sideBasis, directionBasisTest, directionBasisReal);
+	float dbX = targetX - jointPosX;
+	float dbY = targetY - jointPosY;
+	float dbZ = targetZ - jointPosZ;
+
+	a3vec3 db = { dbX, dbY, dbZ };
+
+	//a3real4 vec = {0,0,0,0};
+	//vec = target.v - jointPos.v;
+
+	//	1. direction basis = target (m_hierachyObj) - joint position (m_affected)
+	a3real3r directionBasisTest = a3real3Sub(target.v, jointPos.v);
+
+	//	2. side basis (X-Axis) = up vector Xcross direction basis
+	a3vec4 upVector = { 99,1,88,44 };
+	a3real3r upVecReal = upVector.v;
+	//a3real4 upVecReal4 = *upVector.v;
+
+	a3real3r sideBasis = directionBasisTest;
+	a3real3CrossUnit(sideBasis, upVecReal, directionBasisTest);
+	
+	
+	//	3. up basis = direction basis Xcross side basis
+	a3real3r upBasis = directionBasisTest;
+	a3real3CrossUnit(upBasis, directionBasisTest, sideBasis);
 
 
+	// Last Step
+	//	Resolve every affected jointP: a3KinematicsResolvePostIK
+
+
+
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, );
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
