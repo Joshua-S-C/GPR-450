@@ -222,15 +222,10 @@ void a3kinematicsUpdateHierarchyStateIK(a3_HierarchyState* activeHS,
 		a3hierarchyPoseDeconcat
 		(
 			activeHS->localSpace,
-			activeHS->animPose,						
-			baseHS->localSpace,					
+			activeHS->animPose,
+			baseHS->localSpace,
 			activeHS->hierarchy->numNodes
 		);
-
-		a3hierarchyPoseDeconcat(activeHS->localSpace,
-			activeHS->animPose,						// holds current sample pose
-			baseHS->localSpace,						// holds base pose (animPose is all identity poses)
-			activeHS->hierarchy->numNodes);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -279,26 +274,30 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-	a3real4x4 output;
-	a3real4x4SetReal4x4(output, j2obj);
-	a3hierarchyPoseRestore
+	//	-> reassign resolved transform to object-space
+	a3real4x4SetReal4x4(activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m, j2obj);
+	
+	//	-> compute object-space inverse matrix
+	a3real4x4TransformInverse(activeHS->objectSpaceInv->hpose_base[nodeIndex].transformMat.m, activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m);
+	
+	//	-> compute local-space matrix (converts to object space)
+	a3kinematicsSolveInverseSingle(activeHS, nodeIndex, activeHS->hierarchy->nodes[nodeIndex].parentIndex);
+
+	// Its spatial pose ._. whoops
+
+	//	-> restore local-space matrix to pose
+	a3spatialPoseRestore
 	(
-		activeHS->localSpace,
-		activeHS->hierarchy->numNodes,
-		poseGroup->channel,
-		poseGroup->order
+		&activeHS->localSpace->hpose_base[nodeIndex], 
+		*poseGroup->channel, 
+		*poseGroup->order
 	);
 
-
-	a3hierarchyStateUpdateObjectInverse(activeHS);
-	a3hierarchyStateUpdateLocalInverse(activeHS);
-
-	a3hierarchyPoseDeconcat
-	(
-		activeHS->localSpace,
-		activeHS->animPose,
-		baseHS->localSpace,
-		activeHS->hierarchy->numNodes
+	//	-> deconcatenate base pose
+	a3spatialPoseDeconcat(
+		&activeHS->animPose->hpose_base[nodeIndex], 
+		&activeHS->localSpace->hpose_base[nodeIndex], 
+		&baseHS->localSpace->hpose_base[nodeIndex]
 	);
 
 //-----------------------------------------------------------------------------
@@ -400,6 +399,9 @@ void a3kinematicsUpdateLimbIK
 )
 
 {
+	/* TEMP */
+	//return;
+
 	a3mat3 m_hierarchyObj, m_affected_end, m_affected_hinge, m_affected_base;
 
 	//! Failstates
