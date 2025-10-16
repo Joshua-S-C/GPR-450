@@ -421,9 +421,9 @@ void a3kinematicsUpdateLimbIK
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 	// First Step
-	// Transform everything into the space of the skeleton
-	// -> wrist effector
-	// -> pole vector constraint
+		// Transform everything into the space of the skeleton
+		// -> wrist effector
+		// -> pole vector constraint	
 
 	a3vec4 endPos, hingePos, basePos;
 
@@ -449,7 +449,18 @@ void a3kinematicsUpdateLimbIK
 	// a3KinematicsResolvePostIK
 	// a3KinematicsResolvePostIK
 
-	
+
+	//Constrained Displacement
+	a3real4x4p constrainDisplacement;
+	a3real3Diff(constrainDisplacement, endPos.v, basePos.v);
+
+	//EffectorDisplacement
+	a3real4x4p effectorDisplacement;
+	a3real3Diff(effectorDisplacement, basePos.v, hingePos.v);
+
+	//Normal Displacement
+	a3real3p planeNormal;
+	a3real3CrossUnit(planeNormal, effectorDisplacement, constrainDisplacement);
 
 
 //-----------------------------------------------------------------------------
