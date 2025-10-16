@@ -211,15 +211,15 @@ void a3kinematicsUpdateHierarchyStateIK(a3_HierarchyState* activeHS,
 
 		a3kinematicsSolveInverse(activeHS);
 
-		a3spatialPoseRestore(activeHS->localSpace,
-			activeHS->animPose,
-			baseHS->localSpace,
-			activeHS->hierarchy->numNodes);
-
-		a3hierarchyPoseDeconcat(activeHS->localSpace,
+		a3hierarchyPoseRestore(activeHS->localSpace,
 			activeHS->hierarchy->numNodes,
 			poseGroup->channel,
 			poseGroup->order);
+
+		a3hierarchyPoseDeconcat(activeHS->localSpace,
+			activeHS->animPose,						// holds current sample pose
+			baseHS->localSpace,						// holds base pose (animPose is all identity poses)
+			activeHS->hierarchy->numNodes);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -268,7 +268,7 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	//
 	// a3real4x4SetReal4x4()
 	// 
 //-----------------------------------------------------------------------------
@@ -337,7 +337,7 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 
 	// Last Step
 	//	Resolve every affected jointP: a3KinematicsResolvePostIK
-	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, sightPosition.m);
+	//a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, sightPosition.m);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
