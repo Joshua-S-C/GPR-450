@@ -427,9 +427,9 @@ void a3kinematicsUpdateLimbIK
 
 	a3vec4 endPosVec4, hingePosVec4, basePosVec4, targetPosVec4, polePosVec4;
 
-	endPosVec4 = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_end].transformMat.v3;
-	hingePosVec4 = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_hinge].transformMat.v3;
-	basePosVec4 = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected_base].transformMat.v3;
+	endPosVec4 = sceneGraphState->objectSpace->hpose_base[hierarchyObjIndex_affected_end].transformMat.v3;
+	hingePosVec4 = sceneGraphState->objectSpace->hpose_base[hierarchyObjIndex_affected_hinge].transformMat.v3;
+	basePosVec4 = sceneGraphState->objectSpace->hpose_base[hierarchyObjIndex_affected_base].transformMat.v3;
 
 
 	targetPosVec4 = sceneGraphState->objectSpace->hpose_base[sceneGraphIndex_constraint].transformMat.v3;
@@ -565,8 +565,53 @@ void a3kinematicsUpdateLimbIK
 
 	//Hinge to Target
 	{
+		a3vec4 targetVec4, newHingeVec4;
 		
+		targetVec4.x = targetPos[0];
+		targetVec4.y = targetPos[1];
+		targetVec4.z = targetPos[2];
+		targetVec4.w = 1.0f;
+
+		newHingeVec4.x = newHinge[0];
+		newHingeVec4.y = newHinge[1];
+		newHingeVec4.z = newHinge[2];
+		newHingeVec4.w = 1.0f;
+
+		a3real4x4MakeLookAt
+		(
+			j2obj_hinge,
+			inverseHinge,
+			targetVec4.v,
+			newHingeVec4.v,
+			upVec4.v
+		);
 	}
+
+	//End looks the same way
+	{
+		a3vec4 endVec4, targetVec4;
+
+		endVec4.x = targetPos[0];
+		endVec4.y = targetPos[1];
+		endVec4.z = targetPos[2];
+		endVec4.w = 1.0f;
+
+		targetVec4 = endVec4;
+		targetVec4.z += 1.0f;
+
+		a3real4x4MakeLookAt
+		(
+			j2obj_end,
+			inverseEnd,
+			targetVec4.v,
+			targetVec4.v,
+			upVec4.v
+		);
+	}
+
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_base, j2obj_base);
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_hinge, j2obj_hinge);
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_end, j2obj_end);
 
 
 	/*// Constrained Displacement
