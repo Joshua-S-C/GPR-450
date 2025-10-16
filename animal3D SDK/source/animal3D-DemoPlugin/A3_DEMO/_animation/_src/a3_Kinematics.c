@@ -487,7 +487,27 @@ void a3kinematicsUpdateLimbIK
 	maximumReach = lengthUpperLimb + lengthLowerLimb - epsilon;
 	distanceToTarget = a3clamp(distanceToTarget, minimumReach, maximumReach);
 
+	//Calculate Direction from Base to Target
+	a3real3 directionBaseToTarget;
+	if (a3real3GetUnit(directionBaseToTarget, baseToTarget))
+		return;
 
+	//Pole Direction
+	a3real3 baseToPole, polePlaneNormalized;
+
+	a3real3Diff(baseToPole, polePos, basePos);
+	a3real3Cross(polePlaneNormalized, directionBaseToTarget, polePlaneNormalized);
+
+	if (a3real3GetUnit(polePlaneNormalized, polePlaneNormalized) == 0)
+	{
+		a3real3Set(polePlaneNormalized, 0, 0, 1);
+		a3real3Cross(polePlaneNormalized, directionBaseToTarget, polePlaneNormalized);
+		a3real3GetUnit(polePlaneNormalized, polePlaneNormalized);
+	}
+
+	a3real3 bendDirection;
+	a3real3Cross(bendDirection, polePlaneNormalized, directionBaseToTarget);
+	a3real3GetUnit(polePlaneNormalized, polePlaneNormalized);
 
 	/*// Constrained Displacement
 	// Distance of bottom of right triangle
