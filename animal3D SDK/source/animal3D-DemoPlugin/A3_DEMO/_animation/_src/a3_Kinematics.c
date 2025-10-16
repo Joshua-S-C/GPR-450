@@ -104,7 +104,11 @@ static inline void a3kinematicsSolveInverseSingle(const a3_HierarchyState* hiera
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	a3real4x4Product(
+		hierarchyState->objectSpace->hpose_base[index].transformMat.m,		// Result: this node object-space.
+		hierarchyState->objectSpace->hpose_base[parentIndex].transformMat.m,// Left-hand: parent node object-space.
+		hierarchyState->localSpace->hpose_base[index].transformMat.m		// Right-hand: this node local space.
+	);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -116,7 +120,7 @@ static inline void a3kinematicsSolveInverseRoot(const a3_HierarchyState* hierarc
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+	hierarchyState->objectSpace->hpose_base[index] = hierarchyState->localSpace->hpose_base[index];
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -190,6 +194,7 @@ void a3kinematicsUpdateHierarchyStateFK(a3_HierarchyState* activeHS,
 	}
 }
 
+// Should be done
 void a3kinematicsUpdateHierarchyStateIK(a3_HierarchyState* activeHS,
 	a3_HierarchyState const* baseHS, a3_HierarchyPoseGroup const* poseGroup)
 {
@@ -206,12 +211,12 @@ void a3kinematicsUpdateHierarchyStateIK(a3_HierarchyState* activeHS,
 
 		a3kinematicsSolveInverse(activeHS);
 
-		a3hierarchyPoseConcat(activeHS->localSpace,
+		a3spatialPoseRestore(activeHS->localSpace,
 			activeHS->animPose,
 			baseHS->localSpace,
 			activeHS->hierarchy->numNodes);
 
-		a3hierarchyPoseConvert(activeHS->localSpace,
+		a3hierarchyPoseDeconcat(activeHS->localSpace,
 			activeHS->hierarchy->numNodes,
 			poseGroup->channel,
 			poseGroup->order);
