@@ -244,7 +244,8 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 //-----------------------------------------------------------------------------
 
 
-
+	// a3real4x4SetReal4x4()
+	// 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
 //-----------------------------------------------------------------------------
@@ -269,7 +270,22 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
+	// The bases in params tells which axes map to which axes (a3basisToMat3)
 
+	// First Step
+	//	Trnsform everything into the space of the skeleton
+	//	-> look-at target
+
+	// Main Step
+	//	Solver: Build an orthonormal basis (joint-to-object basis)
+	//	1. direction basis = target - joint position
+	//	2. side basis (X-Axis) = up vector Xcross direction basis
+	//	3. up basis = direction basis Xcross side basis
+	//	4. normalize all (or do this first to the first and second bases)
+	//	Contingency (dont need to implement): If look direction is Up or Down (in line with up vector), then their cross would be 0. So we need to pick a new up by choosing a diff basis (like vector.back)
+
+	// Last Step
+	//	Resolve every affected jointP: a3KinematicsResolvePostIK
 
 
 //-----------------------------------------------------------------------------
@@ -301,7 +317,28 @@ void a3kinematicsUpdateLimbIK(a3_HierarchyState const* sceneGraphState,
 //-----------------------------------------------------------------------------
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
+	// First Step
+	// Trnsform everything into the space of the skeleton
+	// -> wrist effector
+	// -> pole vector constraint
 
+	// Main Step
+	// solve joint-to-object for end, hinge, base
+	//	-> end*
+	//	-> hinge position*
+	//	1. base joint to end effector vector (and distance)
+	//	2. base joint to pole vector constraint
+	//	3. plane normal = step 1 (base to pole) Xcross step 2 (base to end)
+	//	4. geometric (Heron's formular) or algebrais (law of cosines)
+	//	-> solves elbow position
+	//	5. "look at" solves the shoulder an delbow rotations
+
+	// Last Step
+	// Resolve every affected jointP: a3KinematicsResolvePostIK
+	// -> work from root to leaf
+	// a3KinematicsResolvePostIK
+	// a3KinematicsResolvePostIK
+	// a3KinematicsResolvePostIK
 
 
 //-----------------------------------------------------------------------------
