@@ -138,7 +138,16 @@ a3i32 a3kinematicsSolveInversePartial(const a3_HierarchyState* hierarchyState, c
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-
+		const a3_HierarchyNode* itr = hierarchyState->hierarchy->nodes + firstIndex;
+		const a3_HierarchyNode* const end = itr + nodeCount;
+		for (; itr < end; ++itr)
+		{
+			if (itr->parentIndex >= 0)
+				a3kinematicsSolveInverseSingle(hierarchyState, itr->index, itr->parentIndex);
+			else
+				a3kinematicsSolveInverseRoot(hierarchyState, itr->index);
+		}
+		return (a3i32)(end - itr);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -194,7 +203,17 @@ void a3kinematicsUpdateHierarchyStateIK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
+		a3kinematicsSolveInverse(activeHS);
 
+		a3hierarchyPoseConcat(activeHS->localSpace,
+			activeHS->animPose,
+			baseHS->localSpace,
+			activeHS->hierarchy->numNodes);
+
+		a3hierarchyPoseConvert(activeHS->localSpace,
+			activeHS->hierarchy->numNodes,
+			poseGroup->channel,
+			poseGroup->order);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -278,7 +297,7 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 
 	// Main Step
 	//	Solver: Build an orthonormal basis (joint-to-object basis)
-	//	1. direction basis = target - joint position
+	//	1. direction basis = target (m_hierachyObj) - joint position (m_affected)
 	//	2. side basis (X-Axis) = up vector Xcross direction basis
 	//	3. up basis = direction basis Xcross side basis
 	//	4. normalize all (or do this first to the first and second bases)
@@ -286,6 +305,26 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 
 	// Last Step
 	//	Resolve every affected jointP: a3KinematicsResolvePostIK
+
+	
+	//a3vec3 target = m_hierarchyObj.v2;
+	//a3vec3 jointPos = m_affected.v2;
+
+	a3vec4 target, jointPos;
+
+	target = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].transformMat.v3;
+	jointPos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
+	
+	//a3real3r directionBasisTest = a3real3Sub(target.v, jointPos.v);
+	//a3real3r* directionBasisReal = &directionBasisTest;
+
+	//a3vec4 upVector = { 0,1,0,0 };
+	//a3real3r* upVecReal = upVector.v;
+
+	////*a3real3r
+	//a3real3r* sideBasis = ;
+	//a3real3Cross(sideBasis, directionBasisTest, directionBasisReal);
+
 
 
 //-----------------------------------------------------------------------------
