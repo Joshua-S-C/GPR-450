@@ -194,7 +194,7 @@ void a3kinematicsUpdateHierarchyStateFK(a3_HierarchyState* activeHS,
 	}
 }
 
-// Should be done
+// Should be done || in theory done now
 void a3kinematicsUpdateHierarchyStateIK(a3_HierarchyState* activeHS,
 	a3_HierarchyState const* baseHS, a3_HierarchyPoseGroup const* poseGroup)
 {
@@ -211,15 +211,21 @@ void a3kinematicsUpdateHierarchyStateIK(a3_HierarchyState* activeHS,
 
 		a3kinematicsSolveInverse(activeHS);
 
-		a3spatialPoseRestore(activeHS->localSpace,
-			activeHS->animPose,
-			baseHS->localSpace,
-			activeHS->hierarchy->numNodes);
-
-		a3hierarchyPoseDeconcat(activeHS->localSpace,
+		a3hierarchyPoseRestore
+		(
+			activeHS->localSpace,
 			activeHS->hierarchy->numNodes,
 			poseGroup->channel,
-			poseGroup->order);
+			poseGroup->order
+		);
+
+		a3hierarchyPoseDeconcat
+		(
+			activeHS->localSpace,
+			activeHS->animPose,						
+			baseHS->localSpace,					
+			activeHS->hierarchy->numNodes
+		);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -268,9 +274,28 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
+	a3real4x4 output;
+	a3real4x4SetReal4x4(output, j2obj);
+	a3hierarchyPoseRestore
+	(
+		activeHS->localSpace,
+		activeHS->hierarchy->numNodes,
+		poseGroup->channel,
+		poseGroup->order
+	);
 
-	// a3real4x4SetReal4x4()
-	// 
+
+	a3hierarchyStateUpdateObjectInverse(activeHS);
+	a3hierarchyStateUpdateLocalInverse(activeHS);
+
+	a3hierarchyPoseDeconcat
+	(
+		activeHS->localSpace,
+		activeHS->animPose,
+		baseHS->localSpace,
+		activeHS->hierarchy->numNodes
+	);
+
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
 //-----------------------------------------------------------------------------
@@ -337,7 +362,7 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 
 	// Last Step
 	//	Resolve every affected jointP: a3KinematicsResolvePostIK
-	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, sightPosition.m);
+//	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, sightPosition.m);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
