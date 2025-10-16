@@ -307,8 +307,12 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	// Last Step
 	//	Resolve every affected jointP: a3KinematicsResolvePostIK
 
-	// First Step
+	
+	//a3vec3 target = m_hierarchyObj.v2;
+	//a3vec3 jointPos = m_affected.v2;
+
 	a3vec4 target, jointPos;
+
 	target = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].transformMat.v3;
 	jointPos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
 
