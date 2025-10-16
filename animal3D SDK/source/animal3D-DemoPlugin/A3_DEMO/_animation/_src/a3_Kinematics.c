@@ -227,6 +227,11 @@ void a3kinematicsUpdateHierarchyStateIK(a3_HierarchyState* activeHS,
 			activeHS->hierarchy->numNodes
 		);
 
+		a3hierarchyPoseDeconcat(activeHS->localSpace,
+			activeHS->animPose,						// holds current sample pose
+			baseHS->localSpace,						// holds base pose (animPose is all identity poses)
+			activeHS->hierarchy->numNodes);
+
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
 //-----------------------------------------------------------------------------
