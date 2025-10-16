@@ -450,18 +450,22 @@ void a3kinematicsUpdateLimbIK
 	// a3KinematicsResolvePostIK
 
 
-	//Constrained Displacement
+	// Constrained Displacement
+	// Distance of bottom of right triangle
 	a3real4x4 constrainDisplacement;
 	a3real3Diff(*constrainDisplacement, endPos.v, basePos.v);
 
-	//EffectorDisplacement
+	// Effector Displacement
 	a3real4x4 effectorDisplacement;
 	a3real3Diff(*effectorDisplacement, basePos.v, hingePos.v);
 
-	//Normal Displacement
-	a3real3 planeNormal;
-	a3real3CrossUnit(planeNormal, *effectorDisplacement, *constrainDisplacement);
+	// Normal Displacement
+	a3real4x4 planeNormal;
+	a3real3CrossUnit(*planeNormal, *effectorDisplacement, *constrainDisplacement);
 
+	// Height of triangle
+	a3real3 height;
+	a3real3Cross(height, *planeNormal, *effectorDisplacement);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
