@@ -469,6 +469,25 @@ void a3kinematicsUpdateLimbIK
 	a3real3Diff(hingeToEnd, endPos, hingePos);
 	a3real3Diff(baseToTarget, targetPos, basePos);
 
+	a3real lengthUpperLimb;
+	a3real lengthLowerLimb;
+	a3real distanceToTarget;
+
+	lengthUpperLimb = a3real3Length(baseToHinge);
+	lengthLowerLimb = a3real3Length(hingeToEnd);
+	distanceToTarget = a3real3Length(baseToTarget);
+
+	//Clamp to triangle Maths
+	a3real epsilon, minimumReach, maximumReach;
+
+	//epsilon is to prevent divide by zero; Maths Explanation by @ZuchiniByDay//
+	epsilon = (a3real)1e-6;
+
+	minimumReach = a3maximum(lengthUpperLimb - lengthLowerLimb, epsilon);
+	maximumReach = lengthUpperLimb + lengthLowerLimb - epsilon;
+	distanceToTarget = a3clamp(distanceToTarget, minimumReach, maximumReach);
+
+
 
 	/*// Constrained Displacement
 	// Distance of bottom of right triangle
