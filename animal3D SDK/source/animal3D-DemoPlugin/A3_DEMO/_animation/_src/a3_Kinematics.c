@@ -437,35 +437,75 @@ void a3kinematicsUpdateLimbIK
 	//	-> hinge position*
 	//	1. base joint to end effector vector (and distance)
 	//	2. base joint to pole vector constraint
-	//	3. plane normal = step 1 (base to pole) Xcross step 2 (base to end)
-	//	4. geometric (Heron's formular) or algebrais (law of cosines)
+	//	3. plane normal = step 1 (base to end) Xcross step 2 (base to pole)
+	//	4. geometric (Heron's formular) or algebraic (law of cosines)
 	//	-> solves elbow position
 	//	5. "look at" solves the shoulder and elbow rotations
+
+	// Maybe use this :(
+	//a3real3TriangleNormal()
+
+	// Effector Displacement	: Base -> End
+	a3real3 effectorDisplacement;
+	a3real3Diff(effectorDisplacement, endPos.v, basePos.v);
+
+	// Constrain Displacement	: Base -> Pole
+	a3real3 constrainDisplacement;
+	a3real3Diff(constrainDisplacement, hingePos.v, basePos.v);
+
+	// Normal of Plane
+	a3real3 planeNormal;
+	a3real3CrossUnit(planeNormal, effectorDisplacement, constrainDisplacement);
+
+	// Height direction of triangle
+	a3real3 heightDir;
+	a3real3CrossUnit(heightDir, planeNormal, effectorDisplacement);
+
+	// Distance of bottom of right triangle
+	//a3real2Length()
+	//a3real3 bottomDistance = constrainDisplacement * a3real3Normalize(constrainDisplacement)
+
+	// Testing
+	a3real3MulS(heightDir, 10);
+
+	// TODO This is not correct BTW, just testing the pipline's existence
+	// HOW DO WE GET THE BONE LENGTH??
+	// Calculate the missing right-triangle position as an offset from the base effector’s position
+	a3real3 hingeFinalPos;
+	a3real3Sum(hingeFinalPos, basePos.v, constrainDisplacement);
+	a3real3Sum(hingeFinalPos, hingeFinalPos, heightDir);
+
+	// Manually set translation matrix for testing lmao
+	a3mat4 hingeFinalMat;
+
+	hingeFinalMat.m00 = 1;
+	hingeFinalMat.m10 = 0;
+	hingeFinalMat.m20 = 0;
+
+	hingeFinalMat.m01 = 0;
+	hingeFinalMat.m11 = 1;
+	hingeFinalMat.m21 = 0;
+	
+	hingeFinalMat.m02 = 0;
+	hingeFinalMat.m12 = 0;
+	hingeFinalMat.m22 = 1;
+	
+	hingeFinalMat.m03 = 0;
+	hingeFinalMat.m13 = 0;
+	hingeFinalMat.m23 = 1;
+
+	hingeFinalMat.v3 = hingePos;
+
+	// Might be useful
+	//a3real4x4GetEulerXYZTranslateIgnoreScale
 
 	// Last Step
 	// Resolve every affected jointP: a3KinematicsResolvePostIK
 	// -> work from root to leaf
-	// a3KinematicsResolvePostIK
-	// a3KinematicsResolvePostIK
-	// a3KinematicsResolvePostIK
 
-
-	// Constrained Displacement
-	// Distance of bottom of right triangle
-	a3real4x4 constrainDisplacement;
-	a3real3Diff(*constrainDisplacement, endPos.v, basePos.v);
-
-	// Effector Displacement
-	a3real4x4 effectorDisplacement;
-	a3real3Diff(*effectorDisplacement, basePos.v, hingePos.v);
-
-	// Normal Displacement
-	a3real4x4 planeNormal;
-	a3real3CrossUnit(*planeNormal, *effectorDisplacement, *constrainDisplacement);
-
-	// Height of triangle
-	a3real3 height;
-	a3real3Cross(height, *planeNormal, *effectorDisplacement);
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_base, hingeFinalMat.m);
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_hinge, hingeFinalMat.m);
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected_end, hingeFinalMat.m);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
