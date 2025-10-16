@@ -104,10 +104,14 @@ static inline void a3kinematicsSolveInverseSingle(const a3_HierarchyState* hiera
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-	a3real4x4Product(
-		hierarchyState->objectSpace->hpose_base[index].transformMat.m,		// Result: this node object-space.
-		hierarchyState->objectSpace->hpose_base[parentIndex].transformMat.m,// Left-hand: parent node object-space.
-		hierarchyState->localSpace->hpose_base[index].transformMat.m		// Right-hand: this node local space.
+	a3real4x4 invParentTransform;
+	a3real4x4GetInverse(invParentTransform, hierarchyState->objectSpace->hpose_base[parentIndex].transformMat.m);
+
+	a3real4x4Product
+	(
+		hierarchyState->localSpace->hpose_base[index].transformMat.m,       // Result: this node local-space
+		invParentTransform,                                                 // Left-hand: parent node inverse object-space
+		hierarchyState->objectSpace->hpose_base[index].transformMat.m       // Right-hand: this node object-space
 	);
 
 //-----------------------------------------------------------------------------
@@ -120,7 +124,7 @@ static inline void a3kinematicsSolveInverseRoot(const a3_HierarchyState* hierarc
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-	hierarchyState->objectSpace->hpose_base[index] = hierarchyState->localSpace->hpose_base[index];
+	hierarchyState->localSpace->hpose_base[index] = hierarchyState->objectSpace->hpose_base[index];
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
@@ -279,27 +283,32 @@ static void a3kinematicsResolvePostIK(a3_HierarchyState* activeHS,
 //****TO-DO-ANIM-PROJECT-3: IMPLEMENT ME
 //-----------------------------------------------------------------------------
 
-	a3real4x4 output;
-	a3real4x4SetReal4x4(output, j2obj);
-	a3hierarchyPoseRestore
-	(
-		activeHS->localSpace,
+	const a3_HierarchyNode* node = activeHS->hierarchy->nodes + nodeIndex;
+
+	// 1. Reassign the new desired object-space transform to the single affected joint
+	a3real4x4SetReal4x4(activeHS->objectSpace->hpose_base[nodeIndex].transformMat.m, j2obj);
+
+	// 2. Compute the object-space inverse matrix for this single node
+	a3real4x4GetInverse(activeHS->objectSpaceInv->hpose_base[nodeIndex].transformMat.m, j2obj);
+
+	// 3. Compute the new local-space matrix for this single node
+	if (node->parentIndex >= 0)
+		a3kinematicsSolveInverseSingle(activeHS, nodeIndex, node->parentIndex);
+	else
+		a3kinematicsSolveInverseRoot(activeHS, nodeIndex);
+
+	
+	// 4. Restore the local-space matrices back into poses
+	a3hierarchyPoseRestore(activeHS->localSpace,
 		activeHS->hierarchy->numNodes,
 		poseGroup->channel,
-		poseGroup->order
-	);
+		poseGroup->order);
 
-
-	a3hierarchyStateUpdateObjectInverse(activeHS);
-	a3hierarchyStateUpdateLocalInverse(activeHS);
-
-	a3hierarchyPoseDeconcat
-	(
-		activeHS->localSpace,
+	// 5. Deconcatenate the base pose
+	a3hierarchyPoseDeconcat(activeHS->localSpace,
 		activeHS->animPose,
 		baseHS->localSpace,
-		activeHS->hierarchy->numNodes
-	);
+		activeHS->hierarchy->numNodes);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
