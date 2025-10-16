@@ -451,16 +451,16 @@ void a3kinematicsUpdateLimbIK
 
 
 	//Constrained Displacement
-	a3real4x4p constrainDisplacement;
-	a3real3Diff(constrainDisplacement, endPos.v, basePos.v);
+	a3real4x4 constrainDisplacement;
+	a3real3Diff(*constrainDisplacement, endPos.v, basePos.v);
 
 	//EffectorDisplacement
-	a3real4x4p effectorDisplacement;
-	a3real3Diff(effectorDisplacement, basePos.v, hingePos.v);
+	a3real4x4 effectorDisplacement;
+	a3real3Diff(*effectorDisplacement, basePos.v, hingePos.v);
 
 	//Normal Displacement
-	a3real3p planeNormal;
-	a3real3CrossUnit(planeNormal, effectorDisplacement, constrainDisplacement);
+	a3real3 planeNormal;
+	a3real3CrossUnit(planeNormal, *effectorDisplacement, *constrainDisplacement);
 
 
 //-----------------------------------------------------------------------------
