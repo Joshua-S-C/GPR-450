@@ -515,6 +515,7 @@ void a3kinematicsUpdateLimbIK
 	b = lengthLowerLimb;
 	c = distanceToTarget;
 
+	//Maths from @ZuchiniByDay; Referenced as well in the original commented below; variables changed to match the Pythagorean Theorem rather than PseudoCode
 	a3real cosA = (a * a + c * c - b * b) / (2.0f * a * c);
 	cosA = a3clamp(cosA, -1.0f, 1.0f);
 	const a3real sinA = a3sqrt(a3maximum(0.0f, 1.0f - cosA * cosA));
@@ -526,6 +527,46 @@ void a3kinematicsUpdateLimbIK
 	a3real3ProductS(tan2, bendDirection, a * sinA);
 	a3real3Sum(newHinge, basePos, tan1);
 	a3real3Sum(newHinge, newHinge, tan2);
+
+	//Look at stuff
+	a3vec4 upVec4;
+	upVec4.x = bendDirection[0];
+	upVec4.y = bendDirection[1];
+	upVec4.z = bendDirection[2];
+	upVec4.w = 0.00f;
+
+	a3real4x4 j2obj_base, inverseBase;
+	a3real4x4 j2obj_hinge, inverseHinge;
+	a3real4x4 j2obj_end, inverseEnd;
+
+	//Base to Hinge
+	{
+		a3vec4 baseVec4, newHingeVec4;
+
+		baseVec4.x = basePos[0];
+		baseVec4.y = basePos[1];
+		baseVec4.z = basePos[2];
+		baseVec4.w = 1.0f;
+
+		newHingeVec4.x = newHinge[0];
+		newHingeVec4.y = newHinge[1];
+		newHingeVec4.z = newHinge[2];
+		newHingeVec4.w = 1.0f;
+
+		a3real4x4MakeLookAt
+		(
+			j2obj_base, 
+			inverseBase, 
+			baseVec4.v, 
+			newHingeVec4.v, 
+			upVec4.v
+		);
+	}
+
+	//Hinge to Target
+	{
+		
+	}
 
 
 	/*// Constrained Displacement
