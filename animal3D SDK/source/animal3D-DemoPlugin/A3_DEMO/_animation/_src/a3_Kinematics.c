@@ -24,7 +24,6 @@
 
 #include "../a3_Kinematics.h"
 
-#include <stdio.h>
 
 
 //-----------------------------------------------------------------------------
@@ -313,49 +312,6 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	target = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].transformMat.v3;
 	jointPos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
 
-	
-	// Testing manually subtracting
-	float targetX = target.x;
-	float targetY = target.y;
-	float targetZ = target.z;
-
-	float jointPosX = jointPos.x;
-	float jointPosY = jointPos.y;
-	float jointPosZ = jointPos.z;
-
-	float dbX = targetX - jointPosX;
-	float dbY = targetY - jointPosY;
-	float dbZ = targetZ - jointPosZ;
-
-	a3vec3 db = { dbX, dbY, dbZ };
-
-	//a3real4 vec = {0,0,0,0};
-	//vec = target.v - jointPos.v;
-
-	//	1. direction basis = target (m_hierachyObj) - joint position (m_affected)
-	a3real3r directionBasisTest = a3real3Sub(target.v, jointPos.v);
-
-	//	2. side basis (X-Axis) = up vector Xcross direction basis
-	a3vec4 upVector = { 99,1,88,44 };
-	a3real3r upVecReal = upVector.v;
-	//a3real4 upVecReal4 = *upVector.v;
-
-	a3real3r sideBasis = directionBasisTest;
-	a3real3CrossUnit(sideBasis, upVecReal, directionBasisTest);
-	
-	
-	//	3. up basis = direction basis Xcross side basis
-	a3real3r upBasis = directionBasisTest;
-	a3real3CrossUnit(upBasis, directionBasisTest, sideBasis);
-
-	a3vec4 target, jointPos;
-
-	target = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].transformMat.v3;
-	jointPos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
-	
-	a3real3r directionBasisTest = a3real3Sub(target.v, jointPos.v);
-	a3real3r* directionBasisReal = &directionBasisTest;
-
 	a3vec4 upVector = { 0,1,0,0 };
 
 	a3mat3 sightPosition;
@@ -368,13 +324,13 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 		jointPos.v,
 		target.v,
 		upVector.v
+	);
 
 	// Last Step
 	//	Resolve every affected jointP: a3KinematicsResolvePostIK
 
 
-
-	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, );
+	//a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, );
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
