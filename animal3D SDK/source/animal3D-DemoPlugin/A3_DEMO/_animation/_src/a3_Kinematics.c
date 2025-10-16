@@ -24,6 +24,8 @@
 
 #include "../a3_Kinematics.h"
 
+#include <stdio.h>
+
 
 //-----------------------------------------------------------------------------
 
@@ -346,6 +348,26 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 	a3real3r upBasis = directionBasisTest;
 	a3real3CrossUnit(upBasis, directionBasisTest, sideBasis);
 
+	a3vec4 target, jointPos;
+
+	target = sceneGraphState->localSpace->hpose_base[sceneGraphIndex_effector].transformMat.v3;
+	jointPos = sceneGraphState->localSpace->hpose_base[hierarchyObjIndex_affected].transformMat.v3;
+	
+	a3real3r directionBasisTest = a3real3Sub(target.v, jointPos.v);
+	a3real3r* directionBasisReal = &directionBasisTest;
+
+	a3vec4 upVector = { 0,1,0,0 };
+
+	a3mat3 sightPosition;
+	a3mat3 invSightPosition;
+
+	a3real3x3MakeLookAt
+	(
+		&sightPosition.mm,
+		&invSightPosition.mm,
+		jointPos.v,
+		target.v,
+		upVector.v
 
 	// Last Step
 	//	Resolve every affected jointP: a3KinematicsResolvePostIK
