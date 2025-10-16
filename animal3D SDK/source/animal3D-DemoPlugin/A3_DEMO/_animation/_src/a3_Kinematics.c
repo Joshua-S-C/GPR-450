@@ -318,10 +318,10 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 
 	a3vec4 upVector = { 0,1,0,0 };
 
-	a3mat3 sightPosition;
-	a3mat3 invSightPosition;
+	a3mat4 sightPosition;
+	a3mat4 invSightPosition;
 
-	a3real3x3MakeLookAt
+	a3real4x4MakeLookAt
 	(
 		&sightPosition.mm,
 		&invSightPosition.mm,
@@ -332,9 +332,7 @@ void a3kinematicsUpdateLookAtIK(a3_HierarchyState const* sceneGraphState,
 
 	// Last Step
 	//	Resolve every affected jointP: a3KinematicsResolvePostIK
-
-
-	//a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, );
+	a3kinematicsResolvePostIK(activeHS, baseHS, poseGroup, hierarchyObjIndex_affected, sightPosition.m);
 
 //-----------------------------------------------------------------------------
 //****END-TO-DO-PROJECT-3
