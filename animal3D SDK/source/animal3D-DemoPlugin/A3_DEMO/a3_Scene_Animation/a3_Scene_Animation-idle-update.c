@@ -194,7 +194,7 @@ void a3animation_update_animation_skeletal(
 	a3ui32 h = 0;
 	a3ui32 n = sizeof(scene->clipCtrl) / sizeof(*scene->clipCtrl);
 	a3ui32 n_anim = 3;//controlled only
-	a3real blend_fk_ik = a3real_zero;// 0 = fk, 1 = ik
+	a3real blend_fk_ik = a3real_one;// 0 = fk, 1 = ik
 
 	a3_HierarchyState* activeHS_fk = scene->hierarchyState_skel_fk;
 	a3_HierarchyState* activeHS_ik = scene->hierarchyState_skel_ik;
@@ -246,7 +246,7 @@ void a3animation_update_animation_skeletal(
 	// all joints not affected by IK will match FK state
 	a3hierarchyPoseCopy(activeHS_ik->animPose,	// dst: IK anim
 		activeHS_fk->animPose,					// src: FK anim
-		//	baseHS->animPose,						// src test: base anim (identity)
+	//	baseHS->animPose,						// src test: base anim (identity)
 		activeHS_ik->hierarchy->numNodes);
 	a3kinematicsUpdateHierarchyStateFK(activeHS_ik, baseHS, poseGroup);
 
@@ -268,8 +268,8 @@ void a3animation_update_animation_skeletal(
 	a3hierarchyPoseLerp(activeHS->animPose,	// dst: final anim
 		activeHS_fk->animPose,				// src(0): FK anim
 		activeHS_ik->animPose,				// src(1): IK anim
-		//	baseHS->animPose,									// src test(1): base anim (identity)
-		//	scene->hierarchyState_skel_blend_result->animPose,	// src test(1): blend target
+	//	baseHS->animPose,									// src test(1): base anim (identity)
+	//	scene->hierarchyState_skel_blend_result->animPose,	// src test(1): blend target
 		blend_fk_ik, activeHS->hierarchy->numNodes);
 
 	// finally, rerun FK pipeline (skinning optional)

@@ -774,6 +774,7 @@ void a3animation_loadValidate(a3_DemoState* demoState, a3_Scene_Animation* scene
 
 	a3ui32 i, j;
 	a3ui32 const n_hierarchy = sizeof(scene->hierarchyState_skel) / sizeof(a3_HierarchyState);
+	a3ui32 const n_hierarchy_blend = sizeof(scene->hierarchyState_skel_blend) / sizeof(a3_HierarchyState);
 	
 	// animation
 	scene->sceneGraphState->hierarchy = scene->sceneGraph;
@@ -782,6 +783,8 @@ void a3animation_loadValidate(a3_DemoState* demoState, a3_Scene_Animation* scene
 		a3clipControllerRefresh(&scene->clipCtrl[i], scene->clipPool);
 	for (i = 0, j = n_hierarchy; i < j; ++i)
 		scene->hierarchyState_skel[i].hierarchy = scene->hierarchy_skel;
+	for (i = 0, j = n_hierarchy_blend; i < j; ++i)
+		scene->hierarchyState_skel_blend[i].hierarchy = scene->hierarchy_skel;
 
 	// blend ops
 	a3animation_setBlendOps(demoState, scene);
